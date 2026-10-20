@@ -40,8 +40,11 @@ Kinnow is a lightweight, 100% offline Windows utility for instant file conversio
 
 Grab the latest release from [GitHub Releases](https://github.com/DuhanJishnu/kinnow/releases):
 
+- **`Kinnow-Setup.exe` (Installer - Recommended)**: Standard setup wizard that creates Desktop and Start Menu shortcuts, and automatically launches with Windows.
 - **`Kinnow.zip` (Portable)**: Extract anywhere and run `Kinnow.exe` directly. No installer or admin rights needed.
-- **`Kinnow-Setup.exe` (Installer)**: Standard setup wizard that creates Desktop and Start Menu shortcuts.
+
+> [!NOTE]
+> **Windows SmartScreen Note**: Because Kinnow is a free, independent open-source project without an expensive corporate code-signing certificate, Windows SmartScreen may show a blue prompt stating *"Windows protected your PC"* when launching for the first time. Simply click **"More info"** &rarr; **"Run anyway"**. Kinnow is 100% offline and open-source.
 
 ---
 

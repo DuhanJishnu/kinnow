@@ -15,11 +15,13 @@ from dropwheel.converters import load_all
 from dropwheel.hotkey import HotkeyListener
 from dropwheel.ui.radial_menu import RadialMenu
 from dropwheel.utils import (
+    acquire_single_instance_mutex,
     create_shortcut,
     get_app_executable,
     get_desktop_shortcut_path,
     get_start_menu_shortcut_path,
     is_startup_enabled,
+    release_single_instance_mutex,
     reveal_in_explorer,
     toggle_startup,
 )
@@ -235,6 +237,19 @@ def setup_logging() -> Path | None:
     return log_file
 
 
+_app_instance_mutex = None
+
+
 def main() -> None:
+    global _app_instance_mutex
     setup_logging()
-    sys.exit(DropWheelApp().run())
+
+    _app_instance_mutex, is_already_running = acquire_single_instance_mutex()
+    if is_already_running:
+        logging.warning("Kinnow is already running. Exiting duplicate instance.")
+        sys.exit(0)
+
+    try:
+        sys.exit(DropWheelApp().run())
+    finally:
+        release_single_instance_mutex(_app_instance_mutex)

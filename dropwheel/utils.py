@@ -51,6 +51,32 @@ def play_tick_sound() -> None:
     except Exception:
         pass
 
+
+def acquire_single_instance_mutex(
+    mutex_name: str = "KinnowSingleInstanceMutex_5E28B146",
+) -> tuple[int | None, bool]:
+    """Try to acquire a named Windows Mutex. Returns (handle, is_already_running)."""
+    if sys.platform != "win32":
+        return None, False
+
+    ERROR_ALREADY_EXISTS = 183
+    handle = ctypes.windll.kernel32.CreateMutexW(None, True, mutex_name)
+    last_error = ctypes.windll.kernel32.GetLastError()
+    if last_error == ERROR_ALREADY_EXISTS:
+        return handle, True
+    return handle, False
+
+
+def release_single_instance_mutex(handle: int | None) -> None:
+    """Release and close the named mutex handle on exit."""
+    if sys.platform != "win32" or not handle:
+        return
+    try:
+        ctypes.windll.kernel32.ReleaseMutex(handle)
+        ctypes.windll.kernel32.CloseHandle(handle)
+    except Exception:
+        pass
+
 VK_LBUTTON = 0x01
 VK_TAB = 0x09
 VK_SHIFT = 0x10
