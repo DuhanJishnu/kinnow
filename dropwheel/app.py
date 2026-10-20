@@ -17,7 +17,22 @@ from dropwheel.utils import reveal_in_explorer
 from dropwheel.worker import ConvertJob, JobSignals
 
 
-def make_icon() -> QIcon:
+def get_icon() -> QIcon:
+    """Load the Kinnow app icon from bundled assets, with fallback."""
+    candidates = []
+    if hasattr(sys, "_MEIPASS"):
+        candidates.append(Path(sys._MEIPASS) / "assets" / "kinnow.png")
+        candidates.append(Path(sys._MEIPASS) / "assets" / "kinnow.ico")
+    candidates.append(Path(sys.executable).parent / "_internal" / "assets" / "kinnow.png")
+    candidates.append(Path(sys.executable).parent / "assets" / "kinnow.png")
+    candidates.append(Path(__file__).resolve().parents[1] / "assets" / "kinnow.png")
+    candidates.append(Path(__file__).resolve().parents[1] / "assets" / "kinnow.ico")
+
+    for c in candidates:
+        if c.is_file():
+            return QIcon(str(c))
+
+    # Fallback to drawn icon if asset is somehow missing
     pm = QPixmap(64, 64)
     pm.fill(QColor(0, 0, 0, 0))
     p = QPainter(pm)
@@ -33,6 +48,8 @@ class DropWheelApp:
     def __init__(self) -> None:
         load_all()
         self.qt = QApplication(sys.argv)
+        self.qt.setApplicationName("Kinnow")
+        self.qt.setApplicationDisplayName("Kinnow")
         self.qt.setQuitOnLastWindowClosed(False)  # live in the tray, not in a window
 
         self.pool = QThreadPool.globalInstance()
@@ -46,8 +63,10 @@ class DropWheelApp:
         self.hotkey = HotkeyListener()
         self.hotkey.triggered.connect(self.menu.show_at_cursor)
 
-        self.tray = QSystemTrayIcon(make_icon())
-        self.tray.setToolTip("DropWheel - press Shift while dragging a file")
+        icon = get_icon()
+        self.qt.setWindowIcon(icon)
+        self.tray = QSystemTrayIcon(icon)
+        self.tray.setToolTip("Kinnow - press Shift while dragging a file")
         self.tray.messageClicked.connect(self._on_message_clicked)
 
         tray_menu = QMenu()
@@ -104,13 +123,16 @@ class DropWheelApp:
         return code
 
 
+KinnowApp = DropWheelApp
+
+
 def setup_logging() -> Path | None:
     """Configure logging: WARNING to console (terminal not noisy) and INFO to a log file."""
-    log_dir = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".dropwheel")) / "DropWheel"
+    log_dir = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".kinnow")) / "Kinnow"
     log_file: Path | None = None
     try:
         log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / "dropwheel.log"
+        log_file = log_dir / "kinnow.log"
     except Exception:
         pass
 
