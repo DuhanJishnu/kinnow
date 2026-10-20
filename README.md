@@ -24,14 +24,19 @@ Your original file is never moved, modified or deleted. Existing names are never
 
 ## Supported conversions & actions
 
-| Type | From | Available Targets / Tools |
+| Category | Source Formats | Available Targets / Quick Tools |
 |---|---|---|
-| **Markdown** | MD, MARKDOWN | **HTML** (clean standalone document), **PDF** (printable), **TXT** |
-| **PDF Tools** | PDF | **COMPRESS** (optimize file size), **SPLIT** (pages to folder), **MERGE** (combine 2+ PDFs in natural order) |
-| **Images** | PNG, JPG, WEBP, BMP, GIF, TIFF | PNG, JPG, WEBP, BMP, GIF, PDF, plus **COMPRESS**, **STRIP EXIF**, **RESIZE 50%**, **GRAYSCALE** |
-| **PDF Conversion** | PDF | PNG (one image, or folder of pages), TXT |
-| **Audio** | MP3, WAV, OGG, FLAC, M4A | MP3, WAV, OGG, FLAC |
-| **Video** | MP4, MKV, AVI, MOV, WEBM | MP4, WEBM, GIF, plus audio extraction to MP3, WAV, OGG, FLAC |
+| **Documents** | DOCX, DOC | **PDF**, **TXT**, **HTML**, **MD**, **PNG**, **EPUB** |
+| **Spreadsheets** | XLSX, XLS | **PDF**, **CSV**, **TSV**, **ODS** |
+| **Presentations** | PPTX, PPT | **PDF**, **PNG**, **JPG** |
+| **PDF** | PDF | **DOCX**, **MD**, **XLSX**, **PPTX**, **PNG**, **JPG**, **TXT**<br>*(Tools: **COMPRESS**, **SPLIT**, **MERGE**)* |
+| **Text & Code** | TXT, LOG, CSV, TSV, JSON, PY, SQL | **PDF**, **HTML** |
+| **Markdown** | MD, MARKDOWN | **HTML**, **PDF**, **TXT** |
+| **Images** | PNG, JPG, WEBP, BMP, GIF, TIFF | **PNG**, **JPG**, **WEBP**, **BMP**, **GIF**, **PDF**<br>*(Tools: **COMPRESS**, **STRIP EXIF**, **RESIZE 50%**, **GRAYSCALE**)* |
+| **Archives** | ZIP, TAR, GZ, TGZ, BZ2 (or Any Files) | *(Tools: **ZIP** (compress files), **EXTRACT** (unpack archive))* |
+| **General** | Any File or Folder | *(Tools: **PROPERTIES** (view metadata))* |
+| **Audio** | MP3, WAV, OGG, FLAC, M4A | **MP3**, **WAV**, **OGG**, **FLAC** |
+| **Video** | MP4, MKV, AVI, MOV, WEBM | **MP4**, **WEBM**, **GIF**, plus audio extraction to **MP3**, **WAV** |
 
 Dropping several files at once converts each of them in parallel. The wheel only offers formats that every dropped file supports.
 

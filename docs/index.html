@@ -725,6 +725,30 @@
               </div>
             </div>
 
+            <div class="file-chip" draggable="true" data-type="docx" data-name="proposal.docx">
+              <div class="file-icon">📘</div>
+              <div class="file-details">
+                <div class="file-name">proposal.docx</div>
+                <div class="file-meta">Word Document • 18 KB</div>
+              </div>
+            </div>
+
+            <div class="file-chip" draggable="true" data-type="sheet" data-name="sales.xlsx">
+              <div class="file-icon">📊</div>
+              <div class="file-details">
+                <div class="file-name">sales.xlsx</div>
+                <div class="file-meta">Excel Sheet • 12 KB</div>
+              </div>
+            </div>
+
+            <div class="file-chip" draggable="true" data-type="pptx" data-name="deck.pptx">
+              <div class="file-icon">📽️</div>
+              <div class="file-details">
+                <div class="file-name">deck.pptx</div>
+                <div class="file-meta">Slide Deck • 54 KB</div>
+              </div>
+            </div>
+
             <div class="file-chip" draggable="true" data-type="video" data-name="capture.mp4">
               <div class="file-icon">🎬</div>
               <div class="file-details">
@@ -883,13 +907,19 @@
   <script>
     const TARGETS = {
       image: ['JPG', 'WEBP', 'BMP', 'GIF', 'PDF'],
-      pdf: ['PNG', 'TXT'],
+      docx: ['PDF', 'TXT', 'HTML', 'MD', 'PNG', 'EPUB'],
+      sheet: ['PDF', 'CSV', 'TSV', 'ODS'],
+      pptx: ['PDF', 'PNG', 'JPG'],
+      pdf: ['DOCX', 'MD', 'XLSX', 'PPTX', 'PNG', 'JPG'],
       video: ['MP4', 'WEBM', 'GIF', 'MP3', 'WAV'],
       markdown: ['HTML', 'PDF', 'TXT']
     };
 
     const TOOLS = {
       image: ['COMPRESS', 'STRIP EXIF', 'RESIZE 50%', 'GRAYSCALE'],
+      docx: ['ZIP', 'PROPERTIES'],
+      sheet: ['ZIP', 'PROPERTIES'],
+      pptx: ['ZIP', 'PROPERTIES'],
       pdf: ['COMPRESS', 'SPLIT', 'MERGE'],
       video: ['MUTE', 'GIF'],
       markdown: ['TO HTML', 'TO PDF']

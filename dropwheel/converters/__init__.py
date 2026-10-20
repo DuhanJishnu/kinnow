@@ -9,6 +9,7 @@ def load_all() -> None:
         markdown,
         media,
         pdf,
+        presentations,
         spreadsheets,
         text,
     )
