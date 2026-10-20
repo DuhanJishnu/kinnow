@@ -25,11 +25,11 @@ def test_several_files_dropped_at_once(tmp_path):
     """Several files dropped: common targets are computed, and multiple files can be converted."""
     p1 = tmp_path / "img1.png"
     p2 = tmp_path / "img2.jpg"
-    p3 = tmp_path / "doc.txt"
+    p3 = tmp_path / "audio.mp3"
 
     Image.new("RGB", (10, 10), (255, 0, 0)).save(p1)
     Image.new("RGB", (10, 10), (0, 255, 0)).save(p2)
-    p3.write_text("hello")
+    p3.write_bytes(b"\xff\xfb\x90\x00" * 10)
 
     # Common targets between two image types
     common_img = registry.common_targets([p1, p2])

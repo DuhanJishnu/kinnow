@@ -87,6 +87,54 @@ def reveal_in_explorer(path: Path | str) -> None:
         subprocess.Popen(f"explorer.exe {param}")
 
 
+def open_file_properties(path: Path | str) -> bool:
+    """Open the native Windows Explorer File Properties dialog for `path`."""
+    p = Path(path).resolve()
+    if not p.exists() or sys.platform != "win32":
+        return False
+
+    from ctypes import wintypes
+
+    class SHELLEXECUTEINFOW(ctypes.Structure):
+        _fields_ = [
+            ("cbSize", wintypes.DWORD),
+            ("fMask", wintypes.ULONG),
+            ("hwnd", wintypes.HWND),
+            ("lpVerb", wintypes.LPCWSTR),
+            ("lpFile", wintypes.LPCWSTR),
+            ("lpParameters", wintypes.LPCWSTR),
+            ("lpDirectory", wintypes.LPCWSTR),
+            ("nShow", ctypes.c_int),
+            ("hInstApp", wintypes.HINSTANCE),
+            ("lpIDList", ctypes.c_void_p),
+            ("lpClass", wintypes.LPCWSTR),
+            ("hkeyClass", wintypes.HKEY),
+            ("dwHotKey", wintypes.DWORD),
+            ("hIconOrMonitor", wintypes.HANDLE),
+            ("hProcess", wintypes.HANDLE),
+        ]
+
+    SEE_MASK_INVOKEIDLIST = 0x0000000C
+    SW_SHOW = 5
+
+    sei = SHELLEXECUTEINFOW()
+    sei.cbSize = ctypes.sizeof(SHELLEXECUTEINFOW)
+    sei.fMask = SEE_MASK_INVOKEIDLIST
+    sei.hwnd = None
+    sei.lpVerb = "properties"
+    sei.lpFile = str(p)
+    sei.lpParameters = None
+    sei.lpDirectory = None
+    sei.nShow = SW_SHOW
+
+    try:
+        res = ctypes.windll.shell32.ShellExecuteExW(ctypes.byref(sei))
+        return bool(res)
+    except Exception:
+        return False
+
+
+
 def get_app_executable() -> Path:
     """Return the executable path for Kinnow."""
     if getattr(sys, "frozen", False):
