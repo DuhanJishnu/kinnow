@@ -33,10 +33,10 @@ from dropwheel.utils import clamp_to_screen, is_left_mouse_down
 
 log = logging.getLogger(__name__)
 
-SIZE = 380
-OUTER_R = 165
-INNER_R = 82
-HOVER_EXPAND = 8.0   # Maximum outward pixel expansion at full hover (t = 1.0)
+SIZE = 400
+OUTER_R = 162
+INNER_R = 80
+HOVER_EXPAND = 7.0   # Maximum outward pixel expansion at full hover (t = 1.0)
 GAP_PX = 7.0         # Constant linear pixel gap between slices
 CORNER_R = 10.0      # Corner rounding radius for each wedge
 
@@ -222,6 +222,8 @@ class RadialMenu(QWidget):
         dist = math.hypot(dx, dy)
         if not (INNER_R <= dist <= OUTER_R + HOVER_EXPAND):
             return None
+        if n == 1:
+            return 0
         ccw_deg = math.degrees(math.atan2(-dy, dx)) % 360  # 0 = east, counter-clockwise
         clockwise_from_top = (90 - ccw_deg) % 360
         return int(clockwise_from_top // (360 / n))
@@ -231,15 +233,16 @@ class RadialMenu(QWidget):
         r_out = OUTER_R + HOVER_EXPAND * hover_t
         r_in = INNER_R
 
-        if n == 1:
-            path = QPainterPath()
-            path.addEllipse(c, r_out, r_out)
-            path.addEllipse(c, r_in, r_in)
-            return path
+        gap_out = math.degrees(math.asin(min(0.95, (GAP_PX / 2) / r_out)))
+        gap_in = math.degrees(math.asin(min(0.95, (GAP_PX / 2) / r_in)))
 
-        span = 360.0 / n
-        theta1 = 90.0 - (i + 1) * span
-        theta2 = 90.0 - i * span
+        if n == 1:
+            theta1 = -90.0
+            theta2 = 270.0
+        else:
+            span = 360.0 / n
+            theta1 = 90.0 - (i + 1) * span
+            theta2 = 90.0 - i * span
 
         gap_out = math.degrees(math.asin(min(0.95, (GAP_PX / 2) / r_out)))
         gap_in = math.degrees(math.asin(min(0.95, (GAP_PX / 2) / r_in)))
@@ -354,17 +357,146 @@ class RadialMenu(QWidget):
             event.ignore()
         self.hide()
 
-    # ---------- liquid crystal painting helpers ----------
-    # ---------- liquid crystal painting helpers ----------
+    # ---------- painting helpers ----------
     def _draw_ambient_backdrop(self, p: QPainter, c: QPointF) -> None:
-        aura = QRadialGradient(c, OUTER_R + 22)
-        aura.setColorAt(0.0, QColor(28, 16, 10, 0))
-        aura.setColorAt(INNER_R / (OUTER_R + 22), QColor(24, 14, 8, 95))
-        aura.setColorAt(0.85, QColor(20, 12, 6, 75))
-        aura.setColorAt(1.0, QColor(0, 0, 0, 0))
-        p.setPen(Qt.NoPen)
-        p.setBrush(aura)
-        p.drawEllipse(c, OUTER_R + 22, OUTER_R + 22)
+        p.setPen(QPen(QColor(218, 224, 232, 180), 1.2))
+        p.setBrush(QColor(245, 247, 250, 60))
+        p.drawEllipse(c, OUTER_R + 6, OUTER_R + 6)
+
+    def _draw_task_icon(
+        self, p: QPainter, label: str, ix: float, iy: float, color: QColor
+    ) -> bool:
+        tag = label.upper().strip()
+        p.save()
+        p.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(color, 1.8, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        p.setPen(pen)
+        p.setBrush(Qt.NoBrush)
+
+        if "COMPRESS" in tag:
+            # Two diagonal arrows pointing inward towards center (as in screenshot)
+            p.drawLine(QPointF(ix - 5.5, iy - 5.5), QPointF(ix - 1.2, iy - 1.2))
+            p.drawLine(QPointF(ix - 4.2, iy - 1.2), QPointF(ix - 1.2, iy - 1.2))
+            p.drawLine(QPointF(ix - 1.2, iy - 4.2), QPointF(ix - 1.2, iy - 1.2))
+
+            p.drawLine(QPointF(ix + 5.5, iy + 5.5), QPointF(ix + 1.2, iy + 1.2))
+            p.drawLine(QPointF(ix + 4.2, iy + 1.2), QPointF(ix + 1.2, iy + 1.2))
+            p.drawLine(QPointF(ix + 1.2, iy + 4.2), QPointF(ix + 1.2, iy + 1.2))
+            p.restore()
+            return True
+
+        if "EXTRACT" in tag:
+            # Open box with arrow pointing up out of it (as in screenshot)
+            path = QPainterPath()
+            path.moveTo(ix - 6.5, iy - 0.5)
+            path.lineTo(ix - 6.5, iy + 5.5)
+            path.lineTo(ix + 6.5, iy + 5.5)
+            path.lineTo(ix + 6.5, iy - 0.5)
+            p.drawPath(path)
+            p.drawLine(QPointF(ix - 7.5, iy - 1.0), QPointF(ix + 7.5, iy - 1.0))
+
+            p.drawLine(QPointF(ix, iy + 3.0), QPointF(ix, iy - 5.5))
+            p.drawLine(QPointF(ix - 3.0, iy - 3.0), QPointF(ix, iy - 5.8))
+            p.drawLine(QPointF(ix + 3.0, iy - 3.0), QPointF(ix, iy - 5.8))
+            p.restore()
+            return True
+
+        if "METADATA" in tag or "PROP" in tag or "INFO" in tag:
+            # Angled tag with hole (as in screenshot)
+            p.save()
+            p.translate(ix, iy)
+            p.rotate(-45)
+            tag_path = QPainterPath()
+            tag_path.moveTo(-5.5, -3.5)
+            tag_path.lineTo(2.0, -3.5)
+            tag_path.lineTo(6.0, 0.0)
+            tag_path.lineTo(2.0, 3.5)
+            tag_path.lineTo(-5.5, 3.5)
+            tag_path.closeSubpath()
+            p.drawPath(tag_path)
+            p.setBrush(color)
+            p.setPen(Qt.NoPen)
+            p.drawEllipse(QPointF(-2.5, 0.0), 1.2, 1.2)
+            p.restore()
+            p.restore()
+            return True
+
+        if "SPLIT" in tag:
+            # Two vertical document pills (as in screenshot)
+            p.drawRoundedRect(QRectF(ix - 6.5, iy - 6.0, 5.0, 12.0), 2.0, 2.0)
+            p.drawRoundedRect(QRectF(ix + 1.5, iy - 6.0, 5.0, 12.0), 2.0, 2.0)
+            p.restore()
+            return True
+
+        if "MERGE" in tag or "ORGANIZE" in tag:
+            # 4 squares in 2x2 grid (as in screenshot)
+            p.drawRoundedRect(QRectF(ix - 6.5, iy - 6.5, 5.0, 5.0), 1.2, 1.2)
+            p.drawRoundedRect(QRectF(ix + 1.5, iy - 6.5, 5.0, 5.0), 1.2, 1.2)
+            p.drawRoundedRect(QRectF(ix - 6.5, iy + 1.5, 5.0, 5.0), 1.2, 1.2)
+            p.drawRoundedRect(QRectF(ix + 1.5, iy + 1.5, 5.0, 5.0), 1.2, 1.2)
+            p.restore()
+            return True
+
+        if "ZIP" in tag:
+            # Archive box with horizontal band
+            p.drawRoundedRect(QRectF(ix - 6.0, iy - 5.5, 12.0, 11.0), 2.0, 2.0)
+            p.drawLine(QPointF(ix - 6.0, iy - 0.5), QPointF(ix + 6.0, iy - 0.5))
+            p.drawLine(QPointF(ix - 1.5, iy - 3.5), QPointF(ix + 1.5, iy - 3.5))
+            p.drawLine(QPointF(ix - 1.5, iy + 2.5), QPointF(ix + 1.5, iy + 2.5))
+            p.restore()
+            return True
+
+        if "EXIF" in tag or "STRIP" in tag or "CLEAN" in tag:
+            # Tag with clean slash /
+            p.drawRoundedRect(QRectF(ix - 6.0, iy - 5.0, 12.0, 10.0), 2.0, 2.0)
+            p.drawEllipse(QPointF(ix, iy), 2.0, 2.0)
+            p.drawLine(QPointF(ix - 7.0, iy + 6.0), QPointF(ix + 7.0, iy - 6.0))
+            p.restore()
+            return True
+
+        if "RESIZE" in tag or "50%" in tag:
+            # Scaling frame
+            p.drawRect(QRectF(ix - 6.0, iy - 6.0, 12.0, 12.0))
+            p.drawRect(QRectF(ix - 6.0, iy, 6.0, 6.0))
+            p.restore()
+            return True
+
+        if "GRAYSCALE" in tag or "B&W" in tag:
+            # Half-filled contrast circle ◐
+            p.drawEllipse(QPointF(ix, iy), 6.0, 6.0)
+            p.setBrush(color)
+            p.setPen(Qt.NoPen)
+            p.drawPie(QRectF(ix - 6.0, iy - 6.0, 12.0, 12.0), 90 * 16, 180 * 16)
+            p.restore()
+            return True
+
+        if "HTML" in tag:
+            # < / > brackets
+            p.drawLine(QPointF(ix - 3.0, iy - 4.5), QPointF(ix - 6.5, iy))
+            p.drawLine(QPointF(ix - 6.5, iy), QPointF(ix - 3.0, iy + 4.5))
+            p.drawLine(QPointF(ix - 1.0, iy + 4.5), QPointF(ix + 1.0, iy - 4.5))
+            p.drawLine(QPointF(ix + 3.0, iy - 4.5), QPointF(ix + 6.5, iy))
+            p.drawLine(QPointF(ix + 6.5, iy), QPointF(ix + 3.0, iy + 4.5))
+            p.restore()
+            return True
+
+        if "PDF" in tag:
+            # Document page with folded corner
+            path = QPainterPath()
+            path.moveTo(ix - 5.0, iy - 6.5)
+            path.lineTo(ix + 1.5, iy - 6.5)
+            path.lineTo(ix + 5.5, iy - 2.5)
+            path.lineTo(ix + 5.5, iy + 6.5)
+            path.lineTo(ix - 5.0, iy + 6.5)
+            path.closeSubpath()
+            p.drawPath(path)
+            p.drawLine(QPointF(ix + 1.5, iy - 6.5), QPointF(ix + 1.5, iy - 2.5))
+            p.drawLine(QPointF(ix + 1.5, iy - 2.5), QPointF(ix + 5.5, iy - 2.5))
+            p.restore()
+            return True
+
+        p.restore()
+        return False
 
     def _draw_crystal_slice(
         self, p: QPainter, path: QPainterPath, i: int, n: int, t: float
@@ -374,185 +506,115 @@ class RadialMenu(QWidget):
 
         # 1. Soft drop shadow per wedge (deepens with hover progress t)
         p.save()
-        p.translate(0, _lerp(2.5, 4.5, t))
-        p.fillPath(path, QColor(0, 0, 0, int(_lerp(55, 95, t))))
+        p.translate(0, _lerp(2.0, 3.5, t))
+        p.fillPath(path, QColor(0, 0, 0, int(_lerp(28, 55, t))))
         p.restore()
 
-        # 2. Liquid Crystal Base Fill (warm smoked glass -> juicy tangerine)
-        base_grad = QLinearGradient(bounds.topLeft(), bounds.bottomRight())
-        base_grad.setColorAt(
-            0.0, _lerp_color(QColor(58, 48, 44, 195), QColor(255, 158, 44, 240), t)
-        )
-        base_grad.setColorAt(
-            0.5, _lerp_color(QColor(36, 29, 27, 185), QColor(249, 115, 22, 228), t)
-        )
-        base_grad.setColorAt(
-            1.0, _lerp_color(QColor(24, 19, 18, 205), QColor(217, 70, 15, 240), t)
-        )
-        p.fillPath(path, base_grad)
+        # 2. Slice Base Fill: Clean off-white frosted glass -> Kinnow tangerine orange
+        base_color = _lerp_color(QColor(240, 243, 247, 242), QColor(228, 88, 30, 248), t)
+        p.fillPath(path, base_color)
 
-        # 3. Internal Liquid Caustic / Glass Sheen (golden-peach internal refraction)
+        # 3. Subtle internal sheen (adds light depth)
         sheen = QLinearGradient(bounds.topLeft(), bounds.bottomLeft())
-        sheen.setColorAt(
-            0.0, _lerp_color(QColor(255, 245, 235, 50), QColor(255, 255, 255, 130), t)
-        )
-        sheen.setColorAt(
-            0.4, _lerp_color(QColor(255, 235, 220, 8), QColor(255, 237, 213, 28), t)
-        )
-        sheen.setColorAt(
-            1.0, _lerp_color(QColor(255, 160, 90, 18), QColor(254, 215, 170, 70), t)
-        )
+        sheen.setColorAt(0.0, _lerp_color(QColor(255, 255, 255, 110), QColor(255, 255, 255, 60), t))
+        sheen.setColorAt(0.5, _lerp_color(QColor(255, 255, 255, 20), QColor(255, 255, 255, 0), t))
+        sheen.setColorAt(1.0, _lerp_color(QColor(220, 226, 234, 50), QColor(198, 65, 15, 60), t))
         p.fillPath(path, sheen)
 
-        # 4. Specular Rim Border (white-gold top catchlight -> tangerine bottom rim)
-        rim = QLinearGradient(
-            QPointF(c.x() - OUTER_R, c.y() - OUTER_R),
-            QPointF(c.x() + OUTER_R, c.y() + OUTER_R),
-        )
-        rim.setColorAt(
-            0.0, _lerp_color(QColor(255, 245, 235, 130), QColor(255, 255, 255, 250), t)
-        )
-        rim.setColorAt(
-            0.48, _lerp_color(QColor(255, 220, 190, 38), QColor(254, 215, 170, 190), t)
-        )
-        rim.setColorAt(
-            1.0, _lerp_color(QColor(180, 145, 125, 65), QColor(251, 146, 60, 160), t)
-        )
-
-        p.setPen(QPen(rim, _lerp(1.2, 1.85, t)))
+        # 4. Subtle Border Rim (crisp outline)
+        rim_color = _lerp_color(QColor(218, 224, 232, 210), QColor(255, 145, 80, 220), t)
+        p.setPen(QPen(rim_color, _lerp(1.2, 1.8, t)))
         p.setBrush(Qt.NoBrush)
         p.drawPath(path)
 
-        # 5. Crisp Label with smooth radial & font scaling
-        mid_rad = math.radians(90 - (i + 0.5) * 360 / n)
-        r_text = (INNER_R + OUTER_R + HOVER_EXPAND * t) / 2
-        tx = c.x() + r_text * math.cos(mid_rad)
-        ty = c.y() - r_text * math.sin(mid_rad)
-        text_rect = QRectF(tx - 44, ty - 14, 88, 28)
-
-        font = QFont("Segoe UI")
-        font.setPointSizeF(_lerp(10.0, 11.2, t))
-        font.setWeight(QFont.Bold)
-        font.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
-        p.setFont(font)
+        # 5. Label and Icon Positioning
+        mid_rad = math.radians(90.0 if n == 1 else (90 - (i + 0.5) * 360 / n))
+        r_center = (INNER_R + OUTER_R + HOVER_EXPAND * t) / 2
+        tx = c.x() + r_center * math.cos(mid_rad)
+        ty = c.y() - r_center * math.sin(mid_rad)
 
         ext_label = self._targets[i].upper()
-        p.setPen(QColor(0, 0, 0, 125))
-        p.drawText(text_rect.translated(0, 1.5), Qt.AlignCenter, ext_label)
+        glyph_color = _lerp_color(QColor(20, 23, 27, 235), QColor(255, 255, 255, 255), t)
 
-        p.setPen(QColor(255, 255, 255, int(_lerp(225, 255, t))))
-        p.drawText(text_rect, Qt.AlignCenter, ext_label)
+        has_icon = self._draw_task_icon(p, ext_label, tx, ty - 8.5, glyph_color)
+        if has_icon:
+            text_y = ty + 9.5
+            font = QFont("Segoe UI")
+            font.setPointSizeF(_lerp(7.6, 8.2, t))
+            font.setWeight(QFont.Bold)
+            font.setLetterSpacing(QFont.AbsoluteSpacing, 0.4)
+            p.setFont(font)
+
+            text_rect = QRectF(tx - 46, text_y - 10, 92, 20)
+            p.setPen(glyph_color)
+            p.drawText(text_rect, Qt.AlignCenter, ext_label)
+        else:
+            # Format slice without icon: reduced, clean typography
+            font = QFont("Segoe UI")
+            font.setPointSizeF(_lerp(8.4, 9.0, t))
+            font.setWeight(QFont.Bold)
+            font.setLetterSpacing(QFont.AbsoluteSpacing, 0.6)
+            p.setFont(font)
+
+            text_rect = QRectF(tx - 44, ty - 12, 88, 24)
+            p.setPen(glyph_color)
+            p.drawText(text_rect, Qt.AlignCenter, ext_label)
 
     def _draw_center_orb(self, p: QPainter, c: QPointF, n: int) -> None:
         orb_r = INNER_R - 11
-        max_t = max(self._hover_progress, default=0.0)
 
-        # Outer shadow around the center lens
-        shadow = QRadialGradient(QPointF(c.x(), c.y() + 3), orb_r + 6)
-        shadow.setColorAt(0.75, QColor(0, 0, 0, 110))
+        # Soft drop shadow behind center orb
+        shadow = QRadialGradient(QPointF(c.x(), c.y() + 2), orb_r + 6)
+        shadow.setColorAt(0.70, QColor(0, 0, 0, 45))
         shadow.setColorAt(1.0, QColor(0, 0, 0, 0))
         p.setPen(Qt.NoPen)
         p.setBrush(shadow)
-        p.drawEllipse(QPointF(c.x(), c.y() + 3), orb_r + 6, orb_r + 6)
+        p.drawEllipse(QPointF(c.x(), c.y() + 2), orb_r + 6, orb_r + 6)
 
-        # Deep frosted jewel body (warms toward burnt amber when any slice is hovered)
-        orb_grad = QRadialGradient(
-            QPointF(c.x() - orb_r * 0.3, c.y() - orb_r * 0.3), orb_r * 1.35
-        )
-        orb_grad.setColorAt(
-            0.0, _lerp_color(QColor(52, 44, 40, 225), QColor(78, 46, 26, 238), max_t)
-        )
-        orb_grad.setColorAt(
-            0.62, _lerp_color(QColor(30, 25, 23, 230), QColor(42, 24, 15, 238), max_t)
-        )
-        orb_grad.setColorAt(
-            1.0, _lerp_color(QColor(18, 15, 14, 240), QColor(24, 14, 9, 245), max_t)
-        )
-
-        p.setBrush(orb_grad)
-        p.drawEllipse(c, orb_r, orb_r)
-
-        # Top liquid lens reflection
-        lens_rect = QRectF(
-            c.x() - orb_r * 0.72,
-            c.y() - orb_r * 0.86,
-            orb_r * 1.44,
-            orb_r * 0.95,
-        )
-        lens_grad = QLinearGradient(lens_rect.topLeft(), lens_rect.bottomLeft())
-        lens_grad.setColorAt(0.0, QColor(255, 248, 240, 72))
-        lens_grad.setColorAt(0.6, QColor(255, 240, 225, 12))
-        lens_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
-        p.setBrush(lens_grad)
-        p.drawEllipse(lens_rect)
-
-        # Specular rim around the center orb
-        orb_rim = QLinearGradient(
-            QPointF(c.x() - orb_r, c.y() - orb_r),
-            QPointF(c.x() + orb_r, c.y() + orb_r),
-        )
-        orb_rim.setColorAt(
-            0.0, _lerp_color(QColor(255, 245, 235, 140), QColor(253, 186, 116, 225), max_t)
-        )
-        orb_rim.setColorAt(0.5, QColor(255, 240, 225, 45))
-        orb_rim.setColorAt(
-            1.0, _lerp_color(QColor(180, 150, 130, 50), QColor(249, 115, 22, 135), max_t)
-        )
-
-        p.setPen(QPen(orb_rim, 1.3))
-        p.setBrush(Qt.NoBrush)
+        # Clean white orb button body
+        p.setBrush(QColor(255, 255, 255, 252))
+        p.setPen(QPen(QColor(228, 233, 240, 220), 1.5))
         p.drawEllipse(c, orb_r, orb_r)
 
         # Center typography
         if self._hover is not None:
-            sub_font = QFont("Segoe UI", 8, QFont.Medium)
-            sub_font.setLetterSpacing(QFont.AbsoluteSpacing, 1.2)
-            p.setFont(sub_font)
-            p.setPen(QColor(214, 190, 175, 220))
-            heading = "RUN TOOL" if self._mode == "tools" else "CONVERT TO"
-            p.drawText(
-                QRectF(c.x() - 55, c.y() - 24, 110, 18),
-                Qt.AlignCenter,
-                heading,
-            )
-
-            is_tool = self._mode == "tools"
-            main_font = QFont("Segoe UI", 11 if is_tool else 13, QFont.Bold)
-            p.setFont(main_font)
-            p.setPen(QColor(253, 186, 116))  # Luminous tangerine-peach accent
             label = self._targets[self._hover]
-            display_text = label if is_tool else f".{label.upper()}"
+            main_font = QFont("Segoe UI", 9.0, QFont.Bold)
+            main_font.setLetterSpacing(QFont.AbsoluteSpacing, 0.6)
+            p.setFont(main_font)
+            p.setPen(QColor(18, 21, 26, 240))
+            display_text = label if self._mode == "tools" else f".{label.upper()}"
             p.drawText(
-                QRectF(c.x() - 55, c.y() - 6, 110, 30),
+                QRectF(c.x() - 52, c.y() - 14, 104, 28),
                 Qt.AlignCenter,
                 display_text,
             )
         elif n:
             count = len(self._paths)
-            main_font = QFont("Segoe UI", 14, QFont.Bold)
+            main_font = QFont("Segoe UI", 13, QFont.Bold)
             p.setFont(main_font)
-            p.setPen(QColor(255, 250, 245, 240))
+            p.setPen(QColor(18, 21, 26, 240))
             p.drawText(
-                QRectF(c.x() - 55, c.y() - 22, 110, 26),
+                QRectF(c.x() - 50, c.y() - 18, 100, 24),
                 Qt.AlignCenter,
                 str(count),
             )
 
-            sub_font = QFont("Segoe UI", 8, QFont.Medium)
+            sub_font = QFont("Segoe UI", 7.5, QFont.DemiBold)
             sub_font.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
             p.setFont(sub_font)
-            p.setPen(QColor(200, 180, 168, 210))
+            p.setPen(QColor(135, 145, 158, 230))
             mode_tag = "TOOLS" if self._mode == "tools" else ("FILE" if count == 1 else "FILES")
             p.drawText(
-                QRectF(c.x() - 55, c.y() + 2, 110, 20),
+                QRectF(c.x() - 50, c.y() + 4, 100, 16),
                 Qt.AlignCenter,
                 mode_tag,
             )
         else:
-            p.setFont(QFont("Segoe UI", 9, QFont.Medium))
-            p.setPen(QColor(245, 235, 230, 215))
+            p.setFont(QFont("Segoe UI", 8.5, QFont.Medium))
+            p.setPen(QColor(135, 145, 158, 230))
             p.drawText(
-                QRectF(c.x() - 58, c.y() - 30, 116, 60),
+                QRectF(c.x() - 54, c.y() - 25, 108, 50),
                 Qt.AlignCenter,
                 self._message,
             )
@@ -620,4 +682,18 @@ class RadialMenu(QWidget):
                 self._draw_crystal_slice(p, path, i, n, t=t)
 
         self._draw_center_orb(p, c, n)
+
+        # Draw clean subtitle caption below the wheel (matches user's screenshot)
+        if self._hover is not None and self._hover < len(self._targets):
+            if self._mode == "tools" and self._hover < len(self._action_items):
+                caption = self._action_items[self._hover].title
+            else:
+                target_str = self._targets[self._hover].upper()
+                caption = f"Convert to {target_str}"
+
+            p.setFont(QFont("Segoe UI", 9, QFont.Normal))
+            p.setPen(QColor(130, 142, 156, 225))
+            sub_rect = QRectF(c.x() - 130, c.y() + OUTER_R + 10, 260, 20)
+            p.drawText(sub_rect, Qt.AlignCenter, caption)
+
         p.restore()

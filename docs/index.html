@@ -917,12 +917,12 @@
 
     const TOOLS = {
       image: ['COMPRESS', 'STRIP EXIF', 'RESIZE 50%', 'GRAYSCALE'],
-      docx: ['ZIP', 'PROPERTIES'],
-      sheet: ['ZIP', 'PROPERTIES'],
-      pptx: ['ZIP', 'PROPERTIES'],
-      pdf: ['COMPRESS', 'SPLIT', 'MERGE'],
-      video: ['MUTE', 'GIF'],
-      markdown: ['TO HTML', 'TO PDF']
+      docx: ['ZIP', 'METADATA'],
+      sheet: ['ZIP', 'METADATA'],
+      pptx: ['ZIP', 'METADATA'],
+      pdf: ['COMPRESS', 'SPLIT', 'MERGE', 'METADATA'],
+      video: ['MUTE', 'GIF', 'METADATA'],
+      markdown: ['TO HTML', 'TO PDF', 'METADATA']
     };
 
     let currentMode = 'convert'; // 'convert' or 'tools'

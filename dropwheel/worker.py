@@ -39,7 +39,8 @@ class ToolJob(QRunnable):
     def run(self) -> None:
         try:
             out = actions_registry.execute_action(self.action_id, self.paths)
-            self.signals.done.emit(str(out))
+            if out is not None and self.action_id != "file_properties":
+                self.signals.done.emit(str(out))
         except Exception as exc:
             name = self.paths[0].name if self.paths else "Tool action"
             self.signals.failed.emit(name, str(exc))

@@ -88,7 +88,7 @@ def test_file_properties_action(tmp_path: Path):
     f = tmp_path / "sample.txt"
     f.write_text("sample")
     res = view_file_properties([f])
-    assert res == f
+    assert res is None
 
 
 def test_archive_actions_applicable(tmp_path: Path):

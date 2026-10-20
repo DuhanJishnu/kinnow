@@ -34,7 +34,7 @@ Your original file is never moved, modified or deleted. Existing names are never
 | **Markdown** | MD, MARKDOWN | **HTML**, **PDF**, **TXT** |
 | **Images** | PNG, JPG, WEBP, BMP, GIF, TIFF | **PNG**, **JPG**, **WEBP**, **BMP**, **GIF**, **PDF**<br>*(Tools: **COMPRESS**, **STRIP EXIF**, **RESIZE 50%**, **GRAYSCALE**)* |
 | **Archives** | ZIP, TAR, GZ, TGZ, BZ2 (or Any Files) | *(Tools: **ZIP** (compress files), **EXTRACT** (unpack archive))* |
-| **General** | Any File or Folder | *(Tools: **PROPERTIES** (view metadata))* |
+| **General** | Any File or Folder | *(Tools: **METADATA** (view file properties))* |
 | **Audio** | MP3, WAV, OGG, FLAC, M4A | **MP3**, **WAV**, **OGG**, **FLAC** |
 | **Video** | MP4, MKV, AVI, MOV, WEBM | **MP4**, **WEBM**, **GIF**, plus audio extraction to **MP3**, **WAV** |
 

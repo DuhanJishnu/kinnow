@@ -13,12 +13,12 @@ def _always_applicable(paths: list[Path]) -> bool:
 
 @register_action(
     id="file_properties",
-    label="PROPERTIES",
+    label="METADATA",
     title="Open File Properties & Metadata",
     is_applicable=_always_applicable,
 )
-def view_file_properties(paths: list[Path]) -> Path:
+def view_file_properties(paths: list[Path]) -> None:
     """Open Windows native file properties dialog for the selected file(s)."""
     for p in paths:
         open_file_properties(p)
-    return paths[0]
+    return None
