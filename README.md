@@ -10,7 +10,7 @@ Kinnow is a lightweight, 100% offline Windows utility for instant file conversio
 
 <div style="text-align: center;">
   <video width="700" controls>
-    <source src="assets/kinnow.mp4" type="video/mp4">
+    <source src="assets/Kinnow.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
