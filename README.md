@@ -8,12 +8,7 @@ Kinnow is a lightweight, 100% offline Windows utility for instant file conversio
 
 ## ⚡ How to Use
 
-<div style="text-align: center;">
-  <video width="700" controls>
-    <source src="assets/Kinnow.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
+[![Watch the Kinnow demo](assets/kinnow-preview.gif)](assets/Kinnow.mp4)
 
 1. **Start dragging** any file in Windows Explorer.
 2. While dragging:
