@@ -3,4 +3,12 @@
 
 def load_all() -> None:
     """Import every converter module so its @register decorators run."""
-    from . import images, markdown, media, pdf, text  # noqa: F401
+    from . import (  # noqa: F401
+        documents,
+        images,
+        markdown,
+        media,
+        pdf,
+        spreadsheets,
+        text,
+    )
