@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kinnow 🍊 — Drag, Shift, Convert. Instant File Conversion for Windows</title>
+  <meta name="description" content="Kinnow is a lightweight, zero-install Windows utility that converts files at the speed of thought. Drag a file in Explorer, press Shift, and drop onto a format.">
+  <link rel="icon" type="image/png" href="assets/kinnow.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0d14;
+      --bg-card: rgba(18, 23, 34, 0.75);
+      --bg-card-hover: rgba(26, 33, 48, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(242, 112, 36, 0.35);
+      --kinnow-orange: #F27024;
+      --kinnow-orange-bright: #FF8533;
+      --kinnow-gradient: linear-gradient(135deg, #F27024 0%, #FFA048 100%);
+      --electric-cyan: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 50% -20%, rgba(242, 112, 36, 0.15), transparent 50%),
+        radial-gradient(circle at 10% 40%, rgba(56, 189, 248, 0.05), transparent 40%),
+        radial-gradient(circle at 90% 70%, rgba(242, 112, 36, 0.08), transparent 40%);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navbar */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 20, 0.8);
+    }
+    .nav-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+    .brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(242, 112, 36, 0.25);
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .brand-title span {
+      background: var(--kinnow-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--text-main);
+    }
+    .btn-nav-gh {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-nav-gh:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 72px 0 48px;
+      text-align: center;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(242, 112, 36, 0.12);
+      border: 1px solid rgba(242, 112, 36, 0.3);
+      border-radius: 999px;
+      color: var(--kinnow-orange-bright);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 62px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+      max-width: 860px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero h1 span.gradient {
+      background: var(--kinnow-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--text-muted);
+      max-width: 660px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--kinnow-gradient);
+      color: #fff;
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(242, 112, 36, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(242, 112, 36, 0.45);
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 14px 26px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .hero-subtext {
+      font-size: 13px;
+      color: var(--text-faint);
+    }
+
+    /* Interactive Playground */
+    .playground-section {
+      padding: 30px 0 70px;
+    }
+    .stage-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 36px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .stage-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(242, 112, 36, 0.5), transparent);
+    }
+    .stage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .stage-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stage-hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .demo-area {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 32px;
+      min-height: 440px;
+    }
+    @media (max-width: 860px) {
+      .demo-area {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Explorer Shelf */
+    .explorer-mock {
+      background: rgba(10, 14, 22, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .explorer-mock-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-faint);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: grab;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .file-chip:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(242, 112, 36, 0.4);
+      transform: translateY(-2px);
+    }
+    .file-chip.active {
+      border-color: var(--kinnow-orange);
+      background: rgba(242, 112, 36, 0.12);
+    }
+    .file-icon {
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .file-details {
+      flex: 1;
+    }
+    .file-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .file-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Wheel Arena */
+    .wheel-arena {
+      position: relative;
+      background: radial-gradient(circle at center, rgba(30, 41, 59, 0.4) 0%, rgba(10, 13, 20, 0.8) 100%);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      min-height: 400px;
+    }
+    .wheel-arena.dragover {
+      border-color: var(--kinnow-orange);
+      background: radial-gradient(circle at center, rgba(242, 112, 36, 0.08) 0%, rgba(10, 13, 20, 0.8) 100%);
+    }
+
+    /* Radial Wheel Canvas / Elements */
+    .radial-container {
+      width: 360px;
+      height: 360px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s;
+    }
+    .radial-center-orb {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #2a303e 0%, #161a24 60%, #0e1118 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      position: absolute;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+      transition: all 0.2s;
+    }
+    .orb-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .orb-ext {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--electric-cyan);
+      margin-top: 2px;
+    }
+    .orb-count {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    /* SVG Radial Slices */
+    .slices-svg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .slice-path {
+      fill: rgba(30, 36, 48, 0.8);
+      stroke: rgba(255, 255, 255, 0.25);
+      stroke-width: 1.5;
+      cursor: pointer;
+      transition: fill 0.2s, stroke 0.2s, transform 0.2s;
+      transform-origin: 180px 180px;
+    }
+    .slice-path:hover, .slice-path.hovered {
+      fill: rgba(242, 112, 36, 0.85);
+      stroke: rgba(255, 255, 255, 0.8);
+      transform: scale(1.04);
+      filter: drop-shadow(0 4px 12px rgba(242, 112, 36, 0.5));
+    }
+    .slice-text {
+      font-size: 11px;
+      font-weight: 700;
+      fill: #ffffff;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      letter-spacing: 0.5px;
+      user-select: none;
+    }
+
+    /* Toast Notification simulation */
+    .win-toast {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(24, 29, 42, 0.95);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--kinnow-orange);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 50;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      max-width: 300px;
+    }
+    .win-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .toast-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+    .toast-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .toast-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Features Grid */
+    .features-section {
+      padding: 60px 0;
+    }
+    .section-title {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-title h2 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .section-title p {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 28px;
+      transition: all 0.2s;
+    }
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.16);
+      transform: translateY(-4px);
+    }
+    .feature-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(242, 112, 36, 0.15);
+      color: var(--kinnow-orange-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Formats Section */
+    .formats-section {
+      padding: 40px 0 80px;
+    }
+    .format-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .format-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .format-pill span.tag {
+      background: rgba(242, 112, 36, 0.2);
+      color: var(--kinnow-orange-bright);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Author / Footer Section */
+    .author-section {
+      padding: 60px 0;
+      border-top: 1px solid var(--border-color);
+      background: rgba(14, 18, 28, 0.5);
+    }
+    .author-card {
+      max-width: 640px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .author-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid var(--kinnow-orange);
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(242, 112, 36, 0.3);
+    }
+    .author-name {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .author-role {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .author-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .author-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .author-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--kinnow-orange);
+      transform: translateY(-2px);
+    }
+
+    footer {
+      padding: 30px 0;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-faint);
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="brand">
+        <img src="assets/kinnow.png" alt="Kinnow Logo">
+        <div class="brand-title">Kin<span>now</span></div>
+      </a>
+      <div class="nav-links">
+        <a href="#demo" class="nav-link">Interactive Demo</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#formats" class="nav-link">Formats</a>
+        <a href="https://github.com/DuhanJishnu/kinnow" target="_blank" class="btn-nav-gh">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge-pill">
+        🍊 Portable Windows Utility • Zero Installation
+      </div>
+      <h1>
+        Convert files at the <br>
+        <span class="gradient">speed of thought</span>
+      </h1>
+      <p>
+        Drag any file in Windows Explorer, press <strong>Shift</strong>, and drop onto a format.
+        No uploads, no browser tabs, 100% offline & local.
+      </p>
+
+      <div class="hero-actions">
+        <a href="https://github.com/DuhanJishnu/kinnow/releases/latest/download/Kinnow.zip" class="btn-primary" id="download-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Kinnow v0.1.0 (.zip)
+        </a>
+        <a href="https://github.com/DuhanJishnu/kinnow" target="_blank" class="btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          View Source & Docs
+        </a>
+      </div>
+      <div class="hero-subtext">
+        Works on Windows 10 & 11 • Standalone Portable Executable (~4.4 MB) • Open Source (MIT)
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Playground -->
+  <section class="playground-section" id="demo">
+    <div class="container">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F27024" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Interactive Demo: Try Kinnow in Your Browser
+          </div>
+          <div class="stage-hint">
+            💡 Drag a file or tap one below to simulate the Kinnow wheel
+          </div>
+        </div>
+
+        <div class="demo-area">
+          <!-- Mock File List -->
+          <div class="explorer-mock">
+            <div class="explorer-mock-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              Select / Drag a Sample File
+            </div>
+
+            <div class="file-chip active" draggable="true" data-type="image" data-name="photo.png">
+              <div class="file-icon">🖼️</div>
+              <div class="file-details">
+                <div class="file-name">photo.png</div>
+                <div class="file-meta">PNG Image • 2.4 MB</div>
+              </div>
+            </div>
+
+            <div class="file-chip" draggable="true" data-type="pdf" data-name="invoice.pdf">
+              <div class="file-icon">📄</div>
+              <div class="file-details">
+                <div class="file-name">invoice.pdf</div>
+                <div class="file-meta">PDF Document • 3 Pages</div>
+              </div>
+            </div>
+
+            <div class="file-chip" draggable="true" data-type="video" data-name="capture.mp4">
+              <div class="file-icon">🎬</div>
+              <div class="file-details">
+                <div class="file-name">capture.mp4</div>
+                <div class="file-meta">MP4 Video • 1080p</div>
+              </div>
+            </div>
+
+            <div style="font-size: 12px; color: var(--text-faint); margin-top: auto; line-height: 1.4;">
+              In Windows: Hold <strong>Shift</strong> while dragging any real file to trigger this instantly!
+            </div>
+          </div>
+
+          <!-- Wheel Display Area -->
+          <div class="wheel-arena" id="drop-arena">
+            <div class="radial-container" id="radial-wheel">
+              <svg class="slices-svg" viewBox="0 0 360 360" id="slices-svg">
+                <!-- Slices generated dynamically -->
+              </svg>
+              <div class="radial-center-orb" id="center-orb">
+                <div class="orb-label" id="orb-label">READY</div>
+                <div class="orb-ext" id="orb-ext">.WEBP</div>
+              </div>
+            </div>
+
+            <!-- Toast simulation -->
+            <div class="win-toast" id="win-toast">
+              <img src="assets/kinnow.png" class="toast-icon" alt="icon">
+              <div>
+                <div class="toast-title">Converted (click to reveal)</div>
+                <div class="toast-desc" id="toast-filename">photo.webp</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-title">
+        <h2>Designed for Speed & Simplicity</h2>
+        <p>Built as an intuitive local companion that stays out of your way until you need it.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-box">⚡</div>
+          <h3>Drag + Shift Trigger</h3>
+          <p>Works directly inside Windows Explorer. Start dragging any file, press Shift, and the radial menu appears under your cursor.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🔒</div>
+          <h3>100% Local & Offline</h3>
+          <p>Zero cloud uploads. Your confidential documents, photos, and media are processed completely on your own machine.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">📁</div>
+          <h3>Click to Reveal</h3>
+          <p>A completion toast confirms your conversion. Click it to immediately highlight the new file in Windows Explorer.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🛡️</div>
+          <h3>Non-Destructive</h3>
+          <p>Never overwrites your originals. Smart automatic collision handling names duplicate targets <code>name (1).ext</code>.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🖥️</div>
+          <h3>Edge Clamping</h3>
+          <p>Intelligently detects screen boundaries and multi-monitor setups so the wheel never gets cut off at display edges.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">📦</div>
+          <h3>Zero Installation</h3>
+          <p>A purely portable executable. No setup wizards, registry entries, or administrator privileges required.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formats -->
+  <section class="formats-section" id="formats">
+    <div class="container">
+      <div class="section-title">
+        <h2>Supported Formats</h2>
+        <p>Conversions powered by trusted local libraries: Pillow, PyMuPDF, and FFmpeg.</p>
+      </div>
+
+      <div class="format-pills">
+        <div class="format-pill">PNG <span class="tag">Images</span></div>
+        <div class="format-pill">JPG / JPEG <span class="tag">Images</span></div>
+        <div class="format-pill">WEBP <span class="tag">Images</span></div>
+        <div class="format-pill">BMP <span class="tag">Images</span></div>
+        <div class="format-pill">GIF <span class="tag">Images</span></div>
+        <div class="format-pill">TIFF <span class="tag">Images</span></div>
+        <div class="format-pill">PDF → PNG / TXT <span class="tag">Documents</span></div>
+        <div class="format-pill">MP4 / MKV / MOV <span class="tag">Video</span></div>
+        <div class="format-pill">MP3 / WAV / OGG / FLAC <span class="tag">Audio</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Author Info -->
+  <section class="author-section">
+    <div class="container">
+      <div class="author-card">
+        <img src="assets/kinnow.png" alt="Jishnu Duhan" class="author-avatar">
+        <div class="author-name">Created by Jishnu Duhan</div>
+        <div class="author-role">Open Source Developer • Punjab, India</div>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+          Built Kinnow to make file conversions on Windows effortless, private, and instant. Contributions and feedback are warmly welcomed!
+        </p>
+
+        <div class="author-links">
+          <a href="https://github.com/DuhanJishnu" target="_blank" class="author-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            Follow on GitHub
+          </a>
+          <a href="mailto:duhanjishnu@gmail.com" class="author-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email Contact
+          </a>
+          <a href="https://github.com/DuhanJishnu/kinnow" target="_blank" class="author-btn">
+            ⭐ Star on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      &copy; 2026 Kinnow by Jishnu Duhan. Released under the MIT License.
+    </div>
+  </footer>
+
+  <!-- Interactive Wheel JS -->
+  <script>
+    const TARGETS = {
+      image: ['JPG', 'WEBP', 'BMP', 'GIF', 'PDF'],
+      pdf: ['PNG', 'TXT'],
+      video: ['MP4', 'WEBM', 'GIF', 'MP3', 'WAV']
+    };
+
+    let currentType = 'image';
+    let currentFileName = 'photo.png';
+
+    const slicesSvg = document.getElementById('slices-svg');
+    const orbLabel = document.getElementById('orb-label');
+    const orbExt = document.getElementById('orb-ext');
+    const winToast = document.getElementById('win-toast');
+    const toastFilename = document.getElementById('toast-filename');
+    const chips = document.querySelectorAll('.file-chip');
+
+    // Build radial slices in SVG
+    function renderWheel(type) {
+      slicesSvg.innerHTML = '';
+      const list = TARGETS[type] || TARGETS.image;
+      const n = list.length;
+      const c = 180;
+      const r_out = 155;
+      const r_in = 76;
+
+      list.forEach((target, i) => {
+        const span = 360 / n;
+        const startDeg = 90 - (i + 1) * span + 2.5;
+        const endDeg = 90 - i * span - 2.5;
+
+        const pathData = describeArc(c, c, r_in, r_out, startDeg, endDeg);
+
+        // Path
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathData);
+        path.setAttribute('class', 'slice-path');
+        path.dataset.ext = target;
+
+        // Hover handlers
+        path.addEventListener('mouseenter', () => {
+          orbLabel.textContent = 'CONVERT TO';
+          orbExt.textContent = '.' + target;
+        });
+        path.addEventListener('mouseleave', () => {
+          orbLabel.textContent = 'CHOOSE';
+          orbExt.textContent = 'FORMAT';
+        });
+
+        // Click / Drop handler
+        path.addEventListener('click', () => {
+          triggerConversion(target);
+        });
+
+        slicesSvg.appendChild(path);
+
+        // Text label
+        const midDeg = (startDeg + endDeg) / 2;
+        const r_text = (r_in + r_out) / 2;
+        const rad = (midDeg * Math.PI) / 180;
+        const tx = c + r_text * Math.cos(rad);
+        const ty = c - r_text * Math.sin(rad);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', tx);
+        text.setAttribute('y', ty);
+        text.setAttribute('class', 'slice-text');
+        text.textContent = target;
+        slicesSvg.appendChild(text);
+      });
+
+      orbLabel.textContent = 'CHOOSE';
+      orbExt.textContent = 'FORMAT';
+    }
+
+    function polarToCartesian(cx, cy, r, angleInDegrees) {
+      const rad = (angleInDegrees * Math.PI) / 180.0;
+      return {
+        x: cx + r * Math.cos(rad),
+        y: cy - r * Math.sin(rad)
+      };
+    }
+
+    function describeArc(x, y, rInner, rOuter, startAngle, endAngle) {
+      const p1 = polarToCartesian(x, y, rOuter, startAngle);
+      const p2 = polarToCartesian(x, y, rOuter, endAngle);
+      const p3 = polarToCartesian(x, y, rInner, endAngle);
+      const p4 = polarToCartesian(x, y, rInner, startAngle);
+
+      const largeArc = Math.abs(endAngle - startAngle) >= 180 ? 1 : 0;
+
+      return [
+        'M', p1.x, p1.y,
+        'A', rOuter, rOuter, 0, largeArc, 0, p2.x, p2.y,
+        'L', p3.x, p3.y,
+        'A', rInner, rInner, 0, largeArc, 1, p4.x, p4.y,
+        'Z'
+      ].join(' ');
+    }
+
+    function triggerConversion(ext) {
+      const baseName = currentFileName.substring(0, currentFileName.lastIndexOf('.'));
+      const newFile = `${baseName}.${ext.toLowerCase()}`;
+      toastFilename.textContent = newFile;
+      winToast.classList.add('show');
+
+      // Bounce wheel
+      const wheel = document.getElementById('radial-wheel');
+      wheel.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        wheel.style.transform = 'scale(1)';
+      }, 150);
+
+      setTimeout(() => {
+        winToast.classList.remove('show');
+      }, 4500);
+    }
+
+    // Chip selection
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentType = chip.dataset.type;
+        currentFileName = chip.dataset.name;
+        renderWheel(currentType);
+      });
+
+      chip.addEventListener('dragstart', (e) => {
+        currentType = chip.dataset.type;
+        currentFileName = chip.dataset.name;
+        e.dataTransfer.setData('text/plain', chip.dataset.name);
+      });
+    });
+
+    // Arena drop
+    const arena = document.getElementById('drop-arena');
+    arena.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      arena.classList.add('dragover');
+    });
+    arena.addEventListener('dragleave', () => {
+      arena.classList.remove('dragover');
+    });
+    arena.addEventListener('drop', (e) => {
+      e.preventDefault();
+      arena.classList.remove('dragover');
+      renderWheel(currentType);
+    });
+
+    // Initial render
+    renderWheel('image');
+  </script>
+</body>
+</html>
