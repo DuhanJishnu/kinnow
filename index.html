@@ -835,7 +835,8 @@
         <div class="format-pill">BMP <span class="tag">Images</span></div>
         <div class="format-pill">GIF <span class="tag">Images</span></div>
         <div class="format-pill">TIFF <span class="tag">Images</span></div>
-        <div class="format-pill">PDF → PNG / TXT <span class="tag">Documents</span></div>
+        <div class="format-pill">PDF Tools: Compress / Split / Merge <span class="tag">Tools</span></div>
+        <div class="format-pill">Image Tools: Strip EXIF / Resize 50% / B&W <span class="tag">Tools</span></div>
         <div class="format-pill">MD → HTML / PDF <span class="tag">Markdown</span></div>
         <div class="format-pill">MP4 / MKV / MOV <span class="tag">Video</span></div>
         <div class="format-pill">MP3 / WAV / OGG / FLAC <span class="tag">Audio</span></div>
@@ -888,10 +889,10 @@
     };
 
     const TOOLS = {
-      image: ['COMPRESS'],
+      image: ['COMPRESS', 'STRIP EXIF', 'RESIZE 50%', 'GRAYSCALE'],
       pdf: ['COMPRESS', 'SPLIT', 'MERGE'],
       video: ['MUTE', 'GIF'],
-      markdown: ['HTML DOC', 'PRINT PDF']
+      markdown: ['TO HTML', 'TO PDF']
     };
 
     let currentMode = 'convert'; // 'convert' or 'tools'

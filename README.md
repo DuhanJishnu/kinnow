@@ -28,7 +28,7 @@ Your original file is never moved, modified or deleted. Existing names are never
 |---|---|---|
 | **Markdown** | MD, MARKDOWN | **HTML** (clean standalone document), **PDF** (printable), **TXT** |
 | **PDF Tools** | PDF | **COMPRESS** (optimize file size), **SPLIT** (pages to folder), **MERGE** (combine 2+ PDFs in natural order) |
-| **Images** | PNG, JPG, WEBP, BMP, GIF, TIFF | PNG, JPG, WEBP, BMP, GIF, PDF, plus **COMPRESS** |
+| **Images** | PNG, JPG, WEBP, BMP, GIF, TIFF | PNG, JPG, WEBP, BMP, GIF, PDF, plus **COMPRESS**, **STRIP EXIF**, **RESIZE 50%**, **GRAYSCALE** |
 | **PDF Conversion** | PDF | PNG (one image, or folder of pages), TXT |
 | **Audio** | MP3, WAV, OGG, FLAC, M4A | MP3, WAV, OGG, FLAC |
 | **Video** | MP4, MKV, AVI, MOV, WEBM | MP4, WEBM, GIF, plus audio extraction to MP3, WAV, OGG, FLAC |
