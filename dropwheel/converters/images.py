@@ -30,6 +30,7 @@ def _flatten_alpha(im):
 def _make_converter(fmt: str):
     def convert(src: Path, dst: Path) -> None:
         from PIL import Image
+        Image.MAX_IMAGE_PIXELS = None  # allow large images without DecompressionBombError
 
         with Image.open(src) as im:
             if fmt in NEEDS_RGB:
