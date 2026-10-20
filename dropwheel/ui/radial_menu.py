@@ -29,7 +29,7 @@ from PySide6.QtWidgets import QWidget
 
 from dropwheel.actions import registry as actions_registry
 from dropwheel.converters import registry
-from dropwheel.utils import clamp_to_screen, is_left_mouse_down
+from dropwheel.utils import clamp_to_screen, is_left_mouse_down, play_tick_sound
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +127,8 @@ class RadialMenu(QWidget):
     def _set_hovered_slice(self, new_hover: int | None) -> None:
         if new_hover == self._hover:
             return
+        if new_hover is not None:
+            play_tick_sound()
         self._hover = new_hover
         for i, anim in enumerate(self._hover_anims):
             target = 1.0 if i == new_hover else 0.0
@@ -492,6 +494,45 @@ class RadialMenu(QWidget):
             p.drawPath(path)
             p.drawLine(QPointF(ix + 1.5, iy - 6.5), QPointF(ix + 1.5, iy - 2.5))
             p.drawLine(QPointF(ix + 1.5, iy - 2.5), QPointF(ix + 5.5, iy - 2.5))
+            p.restore()
+            return True
+
+        if "MUTE" in tag:
+            # Speaker cone with a diagonal slash
+            path = QPainterPath()
+            path.moveTo(ix - 5.5, iy - 2.0)
+            path.lineTo(ix - 3.0, iy - 2.0)
+            path.lineTo(ix + 0.5, iy - 5.5)
+            path.lineTo(ix + 0.5, iy + 5.5)
+            path.lineTo(ix - 3.0, iy + 2.0)
+            path.lineTo(ix - 5.5, iy + 2.0)
+            path.closeSubpath()
+            p.drawPath(path)
+            p.drawLine(QPointF(ix + 2.5, iy - 4.5), QPointF(ix + 7.0, iy + 4.5))
+            p.restore()
+            return True
+
+        if "AUDIO" in tag or "MP3" in tag:
+            # Musical note pair
+            p.drawLine(QPointF(ix - 3.5, iy - 4.0), QPointF(ix - 3.5, iy + 3.0))
+            p.drawLine(QPointF(ix + 3.5, iy - 5.5), QPointF(ix + 3.5, iy + 1.5))
+            p.drawLine(QPointF(ix - 3.5, iy - 4.0), QPointF(ix + 3.5, iy - 5.5))
+            p.setBrush(color)
+            p.drawEllipse(QPointF(ix - 5.0, iy + 3.0), 2.2, 1.6)
+            p.drawEllipse(QPointF(ix + 2.0, iy + 1.5), 2.2, 1.6)
+            p.restore()
+            return True
+
+        if "GIF" in tag:
+            # Film frame with play triangle
+            p.drawRoundedRect(QRectF(ix - 6.5, iy - 5.5, 13.0, 11.0), 2.0, 2.0)
+            play_tri = QPainterPath()
+            play_tri.moveTo(ix - 2.0, iy - 3.5)
+            play_tri.lineTo(ix + 3.5, iy)
+            play_tri.lineTo(ix - 2.0, iy + 3.5)
+            play_tri.closeSubpath()
+            p.setBrush(color)
+            p.drawPath(play_tri)
             p.restore()
             return True
 

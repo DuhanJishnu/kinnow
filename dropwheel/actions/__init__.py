@@ -10,4 +10,5 @@ def load_all_actions() -> None:
         image_tools,
         markdown_tools,
         pdf_tools,
+        video_tools,
     )

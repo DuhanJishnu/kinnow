@@ -36,7 +36,7 @@ Your original file is never moved, modified or deleted. Existing names are never
 | **Archives** | ZIP, TAR, GZ, TGZ, BZ2 (or Any Files) | *(Tools: **ZIP** (compress files), **EXTRACT** (unpack archive))* |
 | **General** | Any File or Folder | *(Tools: **METADATA** (view file properties))* |
 | **Audio** | MP3, WAV, OGG, FLAC, M4A | **MP3**, **WAV**, **OGG**, **FLAC** |
-| **Video** | MP4, MKV, AVI, MOV, WEBM | **MP4**, **WEBM**, **GIF**, plus audio extraction to **MP3**, **WAV** |
+| **Video** | MP4, MKV, AVI, MOV, WEBM | **MP4**, **WEBM**, **GIF**, plus audio extraction to **MP3**, **WAV**<br>*(Tools: **MUTE** (strip audio in &lt;1s), **AUDIO** (extract MP3), **MAKE GIF**)* |
 
 Dropping several files at once converts each of them in parallel. The wheel only offers formats that every dropped file supports.
 

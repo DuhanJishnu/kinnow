@@ -2,11 +2,54 @@
 from __future__ import annotations
 
 import ctypes
+import io
+import math
 import os
+from pathlib import Path
 import re
+import struct
 import subprocess
 import sys
-from pathlib import Path
+import wave
+
+_TICK_WAV_CACHE: bytes | None = None
+
+
+def _get_tick_wav() -> bytes:
+    global _TICK_WAV_CACHE
+    if _TICK_WAV_CACHE is not None:
+        return _TICK_WAV_CACHE
+
+    buf = io.BytesIO()
+    # 44.1 kHz, 16-bit mono, 7ms subtle mechanical tick
+    num_samples = int(44100 * 0.007)
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(44100)
+        data = bytearray()
+        for i in range(num_samples):
+            envelope = math.exp(-i / (num_samples * 0.18))
+            sample = int(12000 * envelope * math.sin(2 * math.pi * 2400 * i / 44100))
+            data.extend(struct.pack("<h", sample))
+        w.writeframes(data)
+
+    _TICK_WAV_CACHE = buf.getvalue()
+    return _TICK_WAV_CACHE
+
+
+def play_tick_sound() -> None:
+    """Play a subtle mechanical tick sound asynchronously (0ms latency, non-blocking)."""
+    if sys.platform != "win32":
+        return
+    try:
+        wav_bytes = _get_tick_wav()
+        SND_ASYNC = 0x0001
+        SND_NODEFAULT = 0x0002
+        SND_MEMORY = 0x0004
+        ctypes.windll.winmm.PlaySoundW(wav_bytes, None, SND_MEMORY | SND_ASYNC | SND_NODEFAULT)
+    except Exception:
+        pass
 
 VK_LBUTTON = 0x01
 VK_TAB = 0x09
