@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QRunnable, Signal
 
+from dropwheel.actions import registry as actions_registry
 from dropwheel.converters import registry
 
 
@@ -26,3 +27,19 @@ class ConvertJob(QRunnable):
             self.signals.done.emit(str(out))
         except Exception as exc:  # show any failure to the user instead of crashing
             self.signals.failed.emit(self.src.name, str(exc))
+
+
+class ToolJob(QRunnable):
+    def __init__(self, action_id: str, paths: list[Path], signals: JobSignals) -> None:
+        super().__init__()
+        self.action_id = action_id
+        self.paths = paths
+        self.signals = signals
+
+    def run(self) -> None:
+        try:
+            out = actions_registry.execute_action(self.action_id, self.paths)
+            self.signals.done.emit(str(out))
+        except Exception as exc:
+            name = self.paths[0].name if self.paths else "Tool action"
+            self.signals.failed.emit(name, str(exc))

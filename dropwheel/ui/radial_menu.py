@@ -27,6 +27,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QWidget
 
+from dropwheel.actions import registry as actions_registry
 from dropwheel.converters import registry
 from dropwheel.utils import clamp_to_screen, is_left_mouse_down
 
@@ -55,7 +56,8 @@ def _lerp_color(c1: QColor, c2: QColor, t: float) -> QColor:
 
 
 class RadialMenu(QWidget):
-    chosen = Signal(list, str)  # (list of Paths, target extension)
+    chosen = Signal(list, str)          # (list of Paths, target extension)
+    action_chosen = Signal(str, list)   # (action_id, list of Paths)
 
     def __init__(self) -> None:
         super().__init__()
@@ -70,6 +72,8 @@ class RadialMenu(QWidget):
         self.setAcceptDrops(True)
         self.setFixedSize(SIZE, SIZE)
 
+        self._mode: str = "convert"     # "convert" (Shift) or "tools" (Tab)
+        self._action_items: list = []
         self._paths: list[Path] = []
         self._targets: list[str] = []
         self._hover: int | None = None
@@ -135,10 +139,16 @@ class RadialMenu(QWidget):
             anim.start()
 
     # ---------- showing / hiding ----------
-    def show_at_cursor(self) -> None:
-        if self.isVisible() or self._locked:
+    def show_at_cursor(self, mode: str = "convert") -> None:
+        if self.isVisible():
+            if mode != self._mode:
+                self.set_mode(mode)
             return  # key auto-repeat calls this many times; ignore repeats
+        if self._locked:
+            return
+        self._mode = mode
         self._paths, self._targets, self._hover = [], [], None
+        self._action_items = []
         self._open_progress = 0.0
         self._init_slice_animations(0)
         self._message = "Drag a file\nonto the wheel"
@@ -154,7 +164,29 @@ class RadialMenu(QWidget):
         self.move(x, y)
         self.show()
         self.raise_()
-        log.info("overlay shown (armed) at (%d,%d)", x, y)
+        log.info("overlay shown (armed) [%s] at (%d,%d)", mode, x, y)
+
+    def set_mode(self, mode: str) -> None:
+        if mode == self._mode:
+            return
+        self._mode = mode
+        log.info("wheel mode switched to %s", mode)
+        if self._paths:
+            self._update_slices_for_current_mode()
+            self.update()
+
+    def _update_slices_for_current_mode(self) -> None:
+        if self._mode == "tools":
+            self._action_items = actions_registry.applicable_actions(self._paths)
+            self._targets = [a.label for a in self._action_items]
+            if not self._targets:
+                self._message = "No tools\nfor this file"
+        else:
+            self._targets = registry.common_targets(self._paths)
+            if not self._targets:
+                self._message = "No common\nconversions" if len(self._paths) > 1 else "No conversions\nfor this file"
+        self._hover = None
+        self._init_slice_animations(len(self._targets))
 
     def hideEvent(self, event) -> None:
         log.info("overlay hidden")
@@ -284,11 +316,9 @@ class RadialMenu(QWidget):
 
         first_entry = not self._paths
         self._paths = paths
-        self._targets = registry.common_targets(paths)
-        self._init_slice_animations(len(self._targets))
+        self._update_slices_for_current_mode()
 
         if not self._targets:
-            self._message = "No common\nconversions" if len(paths) > 1 else "No conversions\nfor this file"
             event.ignore()
         else:
             event.acceptProposedAction()
@@ -312,11 +342,14 @@ class RadialMenu(QWidget):
 
     def dropEvent(self, event) -> None:
         idx = self._slice_at(event.position())
-        log.info("drop on slice %s", idx)
+        log.info("drop on slice %s (mode=%s)", idx, self._mode)
         if idx is not None:
             event.setDropAction(Qt.CopyAction)  # copy, so Explorer never deletes the original
             event.accept()
-            self.chosen.emit(self._paths, self._targets[idx])
+            if self._mode == "tools" and idx < len(self._action_items):
+                self.action_chosen.emit(self._action_items[idx].id, self._paths)
+            elif idx < len(self._targets):
+                self.chosen.emit(self._paths, self._targets[idx])
         else:
             event.ignore()
         self.hide()
@@ -476,19 +509,23 @@ class RadialMenu(QWidget):
             sub_font.setLetterSpacing(QFont.AbsoluteSpacing, 1.2)
             p.setFont(sub_font)
             p.setPen(QColor(214, 190, 175, 220))
+            heading = "RUN TOOL" if self._mode == "tools" else "CONVERT TO"
             p.drawText(
                 QRectF(c.x() - 55, c.y() - 24, 110, 18),
                 Qt.AlignCenter,
-                "CONVERT TO",
+                heading,
             )
 
-            main_font = QFont("Segoe UI", 13, QFont.Bold)
+            is_tool = self._mode == "tools"
+            main_font = QFont("Segoe UI", 11 if is_tool else 13, QFont.Bold)
             p.setFont(main_font)
             p.setPen(QColor(253, 186, 116))  # Luminous tangerine-peach accent
+            label = self._targets[self._hover]
+            display_text = label if is_tool else f".{label.upper()}"
             p.drawText(
                 QRectF(c.x() - 55, c.y() - 6, 110, 30),
                 Qt.AlignCenter,
-                f".{self._targets[self._hover].upper()}",
+                display_text,
             )
         elif n:
             count = len(self._paths)
@@ -505,10 +542,11 @@ class RadialMenu(QWidget):
             sub_font.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
             p.setFont(sub_font)
             p.setPen(QColor(200, 180, 168, 210))
+            mode_tag = "TOOLS" if self._mode == "tools" else ("FILE" if count == 1 else "FILES")
             p.drawText(
                 QRectF(c.x() - 55, c.y() + 2, 110, 20),
                 Qt.AlignCenter,
-                "FILE" if count == 1 else "FILES",
+                mode_tag,
             )
         else:
             p.setFont(QFont("Segoe UI", 9, QFont.Medium))

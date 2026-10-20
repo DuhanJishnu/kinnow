@@ -20,15 +20,15 @@ import logging
 from PySide6.QtCore import QObject, QPoint, QTimer, Signal
 from PySide6.QtGui import QCursor
 
-from dropwheel.utils import is_left_mouse_down, is_shift_down
+from dropwheel.utils import is_left_mouse_down, is_shift_down, is_tab_down
 
 DRAG_THRESHOLD_PX = 8
 log = logging.getLogger(__name__)
 
 
 class HotkeyListener(QObject):
-    # Emitted repeatedly while the trigger holds; RadialMenu.show_at_cursor ignores repeats.
-    triggered = Signal()
+    # Emitted while dragging with Shift (convert mode) or Tab (tools mode).
+    triggered = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -53,9 +53,17 @@ class HotkeyListener(QObject):
         pos = QCursor.pos()
         if self._origin is None:  # button just went down: remember where
             self._origin = pos
-            log.info("mouse down at (%d,%d), shift=%s", pos.x(), pos.y(), is_shift_down())
-        if is_shift_down() and (pos - self._origin).manhattanLength() >= DRAG_THRESHOLD_PX:
-            if not self._fired:
-                self._fired = True
-                log.info("trigger: drag detected with Shift at (%d,%d)", pos.x(), pos.y())
-            self.triggered.emit()
+            log.info("mouse down at (%d,%d), shift=%s, tab=%s", pos.x(), pos.y(), is_shift_down(), is_tab_down())
+
+        if (pos - self._origin).manhattanLength() >= DRAG_THRESHOLD_PX:
+            mode: str | None = None
+            if is_tab_down():
+                mode = "tools"
+            elif is_shift_down():
+                mode = "convert"
+
+            if mode:
+                if not self._fired:
+                    self._fired = True
+                    log.info("trigger: drag detected with %s at (%d,%d)", mode, pos.x(), pos.y())
+                self.triggered.emit(mode)

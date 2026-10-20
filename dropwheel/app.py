@@ -10,11 +10,20 @@ from PySide6.QtCore import QThreadPool
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
+from dropwheel.actions import load_all_actions
 from dropwheel.converters import load_all
 from dropwheel.hotkey import HotkeyListener
 from dropwheel.ui.radial_menu import RadialMenu
-from dropwheel.utils import reveal_in_explorer
-from dropwheel.worker import ConvertJob, JobSignals
+from dropwheel.utils import (
+    create_shortcut,
+    get_app_executable,
+    get_desktop_shortcut_path,
+    get_start_menu_shortcut_path,
+    is_startup_enabled,
+    reveal_in_explorer,
+    toggle_startup,
+)
+from dropwheel.worker import ConvertJob, JobSignals, ToolJob
 
 
 def get_icon() -> QIcon:
@@ -47,6 +56,7 @@ def get_icon() -> QIcon:
 class DropWheelApp:
     def __init__(self) -> None:
         load_all()
+        load_all_actions()
         self.qt = QApplication(sys.argv)
         self.qt.setApplicationName("Kinnow")
         self.qt.setApplicationDisplayName("Kinnow")
@@ -59,6 +69,7 @@ class DropWheelApp:
 
         self.menu = RadialMenu()
         self.menu.chosen.connect(self._on_chosen)
+        self.menu.action_chosen.connect(self._on_action_chosen)
 
         self.hotkey = HotkeyListener()
         self.hotkey.triggered.connect(self.menu.show_at_cursor)
@@ -66,7 +77,7 @@ class DropWheelApp:
         icon = get_icon()
         self.qt.setWindowIcon(icon)
         self.tray = QSystemTrayIcon(icon)
-        self.tray.setToolTip("Kinnow - press Shift while dragging a file")
+        self.tray.setToolTip("Kinnow - Shift to Convert, Tab for Tools")
         self.tray.messageClicked.connect(self._on_message_clicked)
 
         tray_menu = QMenu()
@@ -74,6 +85,21 @@ class DropWheelApp:
         self._reveal_action.setEnabled(False)
         self._reveal_action.triggered.connect(self._on_message_clicked)
         tray_menu.addAction(self._reveal_action)
+        tray_menu.addSeparator()
+
+        desktop_action = QAction("Add to Desktop", tray_menu)
+        desktop_action.triggered.connect(self._add_desktop_shortcut)
+        tray_menu.addAction(desktop_action)
+
+        start_menu_action = QAction("Add to Start Menu", tray_menu)
+        start_menu_action.triggered.connect(self._add_start_menu_shortcut)
+        tray_menu.addAction(start_menu_action)
+
+        self._startup_action = QAction("Start with Windows", tray_menu)
+        self._startup_action.setCheckable(True)
+        self._startup_action.setChecked(is_startup_enabled())
+        self._startup_action.toggled.connect(self._toggle_startup)
+        tray_menu.addAction(self._startup_action)
         tray_menu.addSeparator()
 
         quit_action = QAction("Quit")
@@ -85,16 +111,65 @@ class DropWheelApp:
         self._last_converted: Path | None = None
         self.tray.show()
 
+    def _add_desktop_shortcut(self) -> None:
+        exe = get_app_executable()
+        lnk = get_desktop_shortcut_path()
+        if create_shortcut(exe, lnk):
+            self.tray.showMessage(
+                "Desktop Shortcut Created",
+                "Kinnow shortcut has been added to your Desktop.",
+                QSystemTrayIcon.Information,
+                3000,
+            )
+        else:
+            self.tray.showMessage(
+                "Shortcut Failed",
+                "Could not create Desktop shortcut.",
+                QSystemTrayIcon.Warning,
+                3000,
+            )
+
+    def _add_start_menu_shortcut(self) -> None:
+        exe = get_app_executable()
+        lnk = get_start_menu_shortcut_path()
+        if create_shortcut(exe, lnk):
+            self.tray.showMessage(
+                "Start Menu Shortcut Created",
+                "Kinnow has been added to your Windows Start Menu.",
+                QSystemTrayIcon.Information,
+                3000,
+            )
+        else:
+            self.tray.showMessage(
+                "Shortcut Failed",
+                "Could not create Start Menu shortcut.",
+                QSystemTrayIcon.Warning,
+                3000,
+            )
+
+    def _toggle_startup(self, checked: bool) -> None:
+        toggle_startup(checked)
+        status = "enabled" if checked else "disabled"
+        self.tray.showMessage(
+            "Startup Setting Updated",
+            f"Kinnow start with Windows is now {status}.",
+            QSystemTrayIcon.Information,
+            3000,
+        )
+
     def _on_chosen(self, paths: list, ext: str) -> None:
         for path in paths:
             self.pool.start(ConvertJob(Path(path), ext, self.signals))
+
+    def _on_action_chosen(self, action_id: str, paths: list) -> None:
+        self.pool.start(ToolJob(action_id, [Path(p) for p in paths], self.signals))
 
     def _on_done(self, out: str) -> None:
         self._last_converted = Path(out)
         self._reveal_action.setText(f"Reveal '{self._last_converted.name}' in Explorer")
         self._reveal_action.setEnabled(True)
         self.tray.showMessage(
-            "Converted (click to reveal)",
+            "Finished (click to reveal)",
             self._last_converted.name,
             QSystemTrayIcon.Information,
             4000,
