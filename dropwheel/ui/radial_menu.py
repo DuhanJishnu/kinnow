@@ -18,6 +18,7 @@ from PySide6.QtGui import (
     QColor,
     QCursor,
     QFont,
+    QGuiApplication,
     QLinearGradient,
     QPainter,
     QPainterPath,
@@ -27,7 +28,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QWidget
 
 from dropwheel.converters import registry
-from dropwheel.utils import is_left_mouse_down
+from dropwheel.utils import clamp_to_screen, is_left_mouse_down
 
 log = logging.getLogger(__name__)
 
@@ -142,10 +143,18 @@ class RadialMenu(QWidget):
         self._init_slice_animations(0)
         self._message = "Drag a file\nonto the wheel"
         pos = QCursor.pos()
-        self.move(pos.x() - SIZE // 2, pos.y() - SIZE // 2)
+        x = pos.x() - SIZE // 2
+        y = pos.y() - SIZE // 2
+        screen = QGuiApplication.screenAt(pos) or QGuiApplication.primaryScreen()
+        if screen:
+            geo = screen.availableGeometry()
+            x, y = clamp_to_screen(
+                x, y, SIZE, SIZE, (geo.left(), geo.top(), geo.width(), geo.height())
+            )
+        self.move(x, y)
         self.show()
         self.raise_()
-        log.info("overlay shown (armed) at (%d,%d)", pos.x(), pos.y())
+        log.info("overlay shown (armed) at (%d,%d)", x, y)
 
     def hideEvent(self, event) -> None:
         log.info("overlay hidden")
@@ -279,7 +288,7 @@ class RadialMenu(QWidget):
         self._init_slice_animations(len(self._targets))
 
         if not self._targets:
-            self._message = "No conversions\nfor this file"
+            self._message = "No common\nconversions" if len(paths) > 1 else "No conversions\nfor this file"
             event.ignore()
         else:
             event.acceptProposedAction()
@@ -313,11 +322,12 @@ class RadialMenu(QWidget):
         self.hide()
 
     # ---------- liquid crystal painting helpers ----------
+    # ---------- liquid crystal painting helpers ----------
     def _draw_ambient_backdrop(self, p: QPainter, c: QPointF) -> None:
         aura = QRadialGradient(c, OUTER_R + 22)
-        aura.setColorAt(0.0, QColor(10, 15, 30, 0))
-        aura.setColorAt(INNER_R / (OUTER_R + 22), QColor(8, 12, 24, 95))
-        aura.setColorAt(0.85, QColor(8, 12, 24, 75))
+        aura.setColorAt(0.0, QColor(28, 16, 10, 0))
+        aura.setColorAt(INNER_R / (OUTER_R + 22), QColor(24, 14, 8, 95))
+        aura.setColorAt(0.85, QColor(20, 12, 6, 75))
         aura.setColorAt(1.0, QColor(0, 0, 0, 0))
         p.setPen(Qt.NoPen)
         p.setBrush(aura)
@@ -332,48 +342,48 @@ class RadialMenu(QWidget):
         # 1. Soft drop shadow per wedge (deepens with hover progress t)
         p.save()
         p.translate(0, _lerp(2.5, 4.5, t))
-        p.fillPath(path, QColor(0, 0, 0, int(_lerp(55, 90, t))))
+        p.fillPath(path, QColor(0, 0, 0, int(_lerp(55, 95, t))))
         p.restore()
 
-        # 2. Liquid Crystal Base Fill (smoothly blends slate glass -> electric cyan)
+        # 2. Liquid Crystal Base Fill (warm smoked glass -> juicy tangerine)
         base_grad = QLinearGradient(bounds.topLeft(), bounds.bottomRight())
         base_grad.setColorAt(
-            0.0, _lerp_color(QColor(48, 56, 74, 195), QColor(56, 189, 248, 238), t)
+            0.0, _lerp_color(QColor(58, 48, 44, 195), QColor(255, 158, 44, 240), t)
         )
         base_grad.setColorAt(
-            0.5, _lerp_color(QColor(28, 33, 46, 180), QColor(14, 165, 233, 222), t)
+            0.5, _lerp_color(QColor(36, 29, 27, 185), QColor(249, 115, 22, 228), t)
         )
         base_grad.setColorAt(
-            1.0, _lerp_color(QColor(18, 22, 32, 205), QColor(37, 99, 235, 238), t)
+            1.0, _lerp_color(QColor(24, 19, 18, 205), QColor(217, 70, 15, 240), t)
         )
         p.fillPath(path, base_grad)
 
-        # 3. Internal Liquid Caustic / Glass Sheen
+        # 3. Internal Liquid Caustic / Glass Sheen (golden-peach internal refraction)
         sheen = QLinearGradient(bounds.topLeft(), bounds.bottomLeft())
         sheen.setColorAt(
-            0.0, _lerp_color(QColor(255, 255, 255, 50), QColor(255, 255, 255, 120), t)
+            0.0, _lerp_color(QColor(255, 245, 235, 50), QColor(255, 255, 255, 130), t)
         )
         sheen.setColorAt(
-            0.4, _lerp_color(QColor(255, 255, 255, 8), QColor(255, 255, 255, 22), t)
+            0.4, _lerp_color(QColor(255, 235, 220, 8), QColor(255, 237, 213, 28), t)
         )
         sheen.setColorAt(
-            1.0, _lerp_color(QColor(120, 180, 255, 18), QColor(186, 230, 253, 60), t)
+            1.0, _lerp_color(QColor(255, 160, 90, 18), QColor(254, 215, 170, 70), t)
         )
         p.fillPath(path, sheen)
 
-        # 4. Specular Rim Border
+        # 4. Specular Rim Border (white-gold top catchlight -> tangerine bottom rim)
         rim = QLinearGradient(
             QPointF(c.x() - OUTER_R, c.y() - OUTER_R),
             QPointF(c.x() + OUTER_R, c.y() + OUTER_R),
         )
         rim.setColorAt(
-            0.0, _lerp_color(QColor(255, 255, 255, 130), QColor(255, 255, 255, 245), t)
+            0.0, _lerp_color(QColor(255, 245, 235, 130), QColor(255, 255, 255, 250), t)
         )
         rim.setColorAt(
-            0.48, _lerp_color(QColor(255, 255, 255, 38), QColor(186, 230, 253, 180), t)
+            0.48, _lerp_color(QColor(255, 220, 190, 38), QColor(254, 215, 170, 190), t)
         )
         rim.setColorAt(
-            1.0, _lerp_color(QColor(148, 163, 184, 65), QColor(56, 189, 248, 145), t)
+            1.0, _lerp_color(QColor(180, 145, 125, 65), QColor(251, 146, 60, 160), t)
         )
 
         p.setPen(QPen(rim, _lerp(1.2, 1.85, t)))
@@ -394,10 +404,10 @@ class RadialMenu(QWidget):
         p.setFont(font)
 
         ext_label = self._targets[i].upper()
-        p.setPen(QColor(0, 0, 0, 120))
+        p.setPen(QColor(0, 0, 0, 125))
         p.drawText(text_rect.translated(0, 1.5), Qt.AlignCenter, ext_label)
 
-        p.setPen(QColor(255, 255, 255, int(_lerp(220, 255, t))))
+        p.setPen(QColor(255, 255, 255, int(_lerp(225, 255, t))))
         p.drawText(text_rect, Qt.AlignCenter, ext_label)
 
     def _draw_center_orb(self, p: QPainter, c: QPointF, n: int) -> None:
@@ -412,18 +422,18 @@ class RadialMenu(QWidget):
         p.setBrush(shadow)
         p.drawEllipse(QPointF(c.x(), c.y() + 3), orb_r + 6, orb_r + 6)
 
-        # Deep frosted jewel body (smoothly tints toward azure when any slice is hovered)
+        # Deep frosted jewel body (warms toward burnt amber when any slice is hovered)
         orb_grad = QRadialGradient(
             QPointF(c.x() - orb_r * 0.3, c.y() - orb_r * 0.3), orb_r * 1.35
         )
         orb_grad.setColorAt(
-            0.0, _lerp_color(QColor(42, 48, 62, 225), QColor(35, 52, 78, 235), max_t)
+            0.0, _lerp_color(QColor(52, 44, 40, 225), QColor(78, 46, 26, 238), max_t)
         )
         orb_grad.setColorAt(
-            0.62, _lerp_color(QColor(22, 26, 36, 230), QColor(20, 27, 42, 235), max_t)
+            0.62, _lerp_color(QColor(30, 25, 23, 230), QColor(42, 24, 15, 238), max_t)
         )
         orb_grad.setColorAt(
-            1.0, _lerp_color(QColor(14, 17, 24, 240), QColor(12, 16, 26, 245), max_t)
+            1.0, _lerp_color(QColor(18, 15, 14, 240), QColor(24, 14, 9, 245), max_t)
         )
 
         p.setBrush(orb_grad)
@@ -437,8 +447,8 @@ class RadialMenu(QWidget):
             orb_r * 0.95,
         )
         lens_grad = QLinearGradient(lens_rect.topLeft(), lens_rect.bottomLeft())
-        lens_grad.setColorAt(0.0, QColor(255, 255, 255, 70))
-        lens_grad.setColorAt(0.6, QColor(255, 255, 255, 10))
+        lens_grad.setColorAt(0.0, QColor(255, 248, 240, 72))
+        lens_grad.setColorAt(0.6, QColor(255, 240, 225, 12))
         lens_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
         p.setBrush(lens_grad)
         p.drawEllipse(lens_rect)
@@ -449,11 +459,11 @@ class RadialMenu(QWidget):
             QPointF(c.x() + orb_r, c.y() + orb_r),
         )
         orb_rim.setColorAt(
-            0.0, _lerp_color(QColor(255, 255, 255, 140), QColor(125, 211, 252, 215), max_t)
+            0.0, _lerp_color(QColor(255, 245, 235, 140), QColor(253, 186, 116, 225), max_t)
         )
-        orb_rim.setColorAt(0.5, QColor(255, 255, 255, 40))
+        orb_rim.setColorAt(0.5, QColor(255, 240, 225, 45))
         orb_rim.setColorAt(
-            1.0, _lerp_color(QColor(148, 163, 184, 50), QColor(56, 189, 248, 125), max_t)
+            1.0, _lerp_color(QColor(180, 150, 130, 50), QColor(249, 115, 22, 135), max_t)
         )
 
         p.setPen(QPen(orb_rim, 1.3))
@@ -465,7 +475,7 @@ class RadialMenu(QWidget):
             sub_font = QFont("Segoe UI", 8, QFont.Medium)
             sub_font.setLetterSpacing(QFont.AbsoluteSpacing, 1.2)
             p.setFont(sub_font)
-            p.setPen(QColor(148, 163, 184, 220))
+            p.setPen(QColor(214, 190, 175, 220))
             p.drawText(
                 QRectF(c.x() - 55, c.y() - 24, 110, 18),
                 Qt.AlignCenter,
@@ -474,7 +484,7 @@ class RadialMenu(QWidget):
 
             main_font = QFont("Segoe UI", 13, QFont.Bold)
             p.setFont(main_font)
-            p.setPen(QColor(125, 211, 252))
+            p.setPen(QColor(253, 186, 116))  # Luminous tangerine-peach accent
             p.drawText(
                 QRectF(c.x() - 55, c.y() - 6, 110, 30),
                 Qt.AlignCenter,
@@ -484,7 +494,7 @@ class RadialMenu(QWidget):
             count = len(self._paths)
             main_font = QFont("Segoe UI", 14, QFont.Bold)
             p.setFont(main_font)
-            p.setPen(QColor(255, 255, 255, 240))
+            p.setPen(QColor(255, 250, 245, 240))
             p.drawText(
                 QRectF(c.x() - 55, c.y() - 22, 110, 26),
                 Qt.AlignCenter,
@@ -494,7 +504,7 @@ class RadialMenu(QWidget):
             sub_font = QFont("Segoe UI", 8, QFont.Medium)
             sub_font.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
             p.setFont(sub_font)
-            p.setPen(QColor(148, 163, 184, 210))
+            p.setPen(QColor(200, 180, 168, 210))
             p.drawText(
                 QRectF(c.x() - 55, c.y() + 2, 110, 20),
                 Qt.AlignCenter,
@@ -502,7 +512,7 @@ class RadialMenu(QWidget):
             )
         else:
             p.setFont(QFont("Segoe UI", 9, QFont.Medium))
-            p.setPen(QColor(226, 232, 240, 215))
+            p.setPen(QColor(245, 235, 230, 215))
             p.drawText(
                 QRectF(c.x() - 58, c.y() - 30, 116, 60),
                 Qt.AlignCenter,
