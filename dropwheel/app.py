@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 from dropwheel.converters import load_all
 from dropwheel.hotkey import HotkeyListener
 from dropwheel.ui.radial_menu import RadialMenu
+from dropwheel.utils import reveal_in_explorer
 from dropwheel.worker import ConvertJob, JobSignals
 
 
@@ -46,13 +48,22 @@ class DropWheelApp:
 
         self.tray = QSystemTrayIcon(make_icon())
         self.tray.setToolTip("DropWheel - press Shift while dragging a file")
+        self.tray.messageClicked.connect(self._on_message_clicked)
+
         tray_menu = QMenu()
+        self._reveal_action = QAction("Reveal in Explorer", tray_menu)
+        self._reveal_action.setEnabled(False)
+        self._reveal_action.triggered.connect(self._on_message_clicked)
+        tray_menu.addAction(self._reveal_action)
+        tray_menu.addSeparator()
+
         quit_action = QAction("Quit")
         quit_action.triggered.connect(self.qt.quit)
         tray_menu.addAction(quit_action)
         self.tray.setContextMenu(tray_menu)
         self._tray_menu = tray_menu  # keep references alive
         self._quit_action = quit_action
+        self._last_converted: Path | None = None
         self.tray.show()
 
     def _on_chosen(self, paths: list, ext: str) -> None:
@@ -60,11 +71,31 @@ class DropWheelApp:
             self.pool.start(ConvertJob(Path(path), ext, self.signals))
 
     def _on_done(self, out: str) -> None:
-        self.tray.showMessage("Converted", Path(out).name, QSystemTrayIcon.Information, 3000)
+        self._last_converted = Path(out)
+        self._reveal_action.setText(f"Reveal '{self._last_converted.name}' in Explorer")
+        self._reveal_action.setEnabled(True)
+        self.tray.showMessage(
+            "Converted (click to reveal)",
+            self._last_converted.name,
+            QSystemTrayIcon.Information,
+            4000,
+        )
+
+    def _on_message_clicked(self) -> None:
+        if self._last_converted:
+            reveal_in_explorer(self._last_converted)
 
     def _on_failed(self, name: str, error: str) -> None:
         logging.error("Conversion failed for %s: %s", name, error)
-        self.tray.showMessage(f"Failed: {name}", error, QSystemTrayIcon.Warning, 5000)
+        if "ffmpeg" in error.lower() and ("missing" in error.lower() or "not found" in error.lower()):
+            self.tray.showMessage(
+                "FFmpeg is Missing",
+                "FFmpeg is required for audio/video conversion. Run 'winget install Gyan.FFmpeg' or place ffmpeg.exe in vendor/.",
+                QSystemTrayIcon.Warning,
+                6000,
+            )
+        else:
+            self.tray.showMessage(f"Failed: {name}", error, QSystemTrayIcon.Warning, 5000)
 
     def run(self) -> int:
         self.hotkey.start()
@@ -73,6 +104,40 @@ class DropWheelApp:
         return code
 
 
+def setup_logging() -> Path | None:
+    """Configure logging: WARNING to console (terminal not noisy) and INFO to a log file."""
+    log_dir = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".dropwheel")) / "DropWheel"
+    log_file: Path | None = None
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / "dropwheel.log"
+    except Exception:
+        pass
+
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    root.handlers.clear()
+
+    # Terminal output: WARNING and ERROR only, keeping console quiet
+    console = logging.StreamHandler(sys.stderr)
+    console.setLevel(logging.WARNING)
+    console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    root.addHandler(console)
+
+    if log_file:
+        try:
+            file_handler = logging.FileHandler(log_file, encoding="utf-8")
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(
+                logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+            )
+            root.addHandler(file_handler)
+        except Exception:
+            pass
+
+    return log_file
+
+
 def main() -> None:
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
     sys.exit(DropWheelApp().run())
