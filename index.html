@@ -666,17 +666,21 @@
       </p>
 
       <div class="hero-actions">
-        <a href="https://github.com/DuhanJishnu/kinnow/releases/latest/download/Kinnow.zip" class="btn-primary" id="download-btn">
+        <a href="https://github.com/DuhanJishnu/kinnow/releases/latest/download/Kinnow-Setup.exe" class="btn-primary" id="download-installer-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Kinnow v0.1.0 (.zip)
+          Download Windows Installer (.exe)
+        </a>
+        <a href="https://github.com/DuhanJishnu/kinnow/releases/latest/download/Kinnow.zip" class="btn-secondary" id="download-zip-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Download Portable (.zip)
         </a>
         <a href="https://github.com/DuhanJishnu/kinnow" target="_blank" class="btn-secondary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-          View Source & Docs
+          GitHub
         </a>
       </div>
       <div class="hero-subtext">
-        Works on Windows 10 & 11 • Standalone Portable Executable (~4.4 MB) • Open Source (MIT)
+        Works on Windows 10 & 11 • Includes Desktop & Start Menu Shortcuts • Open Source (MIT)
       </div>
     </div>
   </section>
@@ -690,8 +694,10 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F27024" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             Interactive Demo: Try Kinnow in Your Browser
           </div>
-          <div class="stage-hint">
-            💡 Drag a file or tap one below to simulate the Kinnow wheel
+          <div class="stage-hint" style="display: flex; gap: 8px; align-items: center;">
+            <span>Mode:</span>
+            <button id="btn-mode-convert" style="background: var(--kinnow-orange); color: white; border: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; cursor: pointer; font-size: 12px;">Shift: Convert</button>
+            <button id="btn-mode-tools" style="background: rgba(255,255,255,0.08); color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 10px; font-weight: 600; cursor: pointer; font-size: 12px;">Tab: Tools</button>
           </div>
         </div>
 
@@ -724,6 +730,14 @@
               <div class="file-details">
                 <div class="file-name">capture.mp4</div>
                 <div class="file-meta">MP4 Video • 1080p</div>
+              </div>
+            </div>
+
+            <div class="file-chip" draggable="true" data-type="markdown" data-name="readme.md">
+              <div class="file-icon">📝</div>
+              <div class="file-details">
+                <div class="file-name">readme.md</div>
+                <div class="file-meta">Markdown Note • 4 KB</div>
               </div>
             </div>
 
@@ -822,6 +836,7 @@
         <div class="format-pill">GIF <span class="tag">Images</span></div>
         <div class="format-pill">TIFF <span class="tag">Images</span></div>
         <div class="format-pill">PDF → PNG / TXT <span class="tag">Documents</span></div>
+        <div class="format-pill">MD → HTML / PDF <span class="tag">Markdown</span></div>
         <div class="format-pill">MP4 / MKV / MOV <span class="tag">Video</span></div>
         <div class="format-pill">MP3 / WAV / OGG / FLAC <span class="tag">Audio</span></div>
       </div>
@@ -868,9 +883,18 @@
     const TARGETS = {
       image: ['JPG', 'WEBP', 'BMP', 'GIF', 'PDF'],
       pdf: ['PNG', 'TXT'],
-      video: ['MP4', 'WEBM', 'GIF', 'MP3', 'WAV']
+      video: ['MP4', 'WEBM', 'GIF', 'MP3', 'WAV'],
+      markdown: ['HTML', 'PDF', 'TXT']
     };
 
+    const TOOLS = {
+      image: ['COMPRESS'],
+      pdf: ['COMPRESS', 'SPLIT', 'MERGE'],
+      video: ['MUTE', 'GIF'],
+      markdown: ['HTML DOC', 'PRINT PDF']
+    };
+
+    let currentMode = 'convert'; // 'convert' or 'tools'
     let currentType = 'image';
     let currentFileName = 'photo.png';
 
@@ -880,11 +904,31 @@
     const winToast = document.getElementById('win-toast');
     const toastFilename = document.getElementById('toast-filename');
     const chips = document.querySelectorAll('.file-chip');
+    const btnModeConvert = document.getElementById('btn-mode-convert');
+    const btnModeTools = document.getElementById('btn-mode-tools');
+
+    btnModeConvert.addEventListener('click', () => {
+      currentMode = 'convert';
+      btnModeConvert.style.background = 'var(--kinnow-orange)';
+      btnModeConvert.style.color = '#fff';
+      btnModeTools.style.background = 'rgba(255,255,255,0.08)';
+      btnModeTools.style.color = 'var(--text-muted)';
+      renderWheel(currentType);
+    });
+
+    btnModeTools.addEventListener('click', () => {
+      currentMode = 'tools';
+      btnModeTools.style.background = 'var(--kinnow-orange)';
+      btnModeTools.style.color = '#fff';
+      btnModeConvert.style.background = 'rgba(255,255,255,0.08)';
+      btnModeConvert.style.color = 'var(--text-muted)';
+      renderWheel(currentType);
+    });
 
     // Build radial slices in SVG
     function renderWheel(type) {
       slicesSvg.innerHTML = '';
-      const list = TARGETS[type] || TARGETS.image;
+      const list = currentMode === 'tools' ? (TOOLS[type] || ['COMPRESS']) : (TARGETS[type] || TARGETS.image);
       const n = list.length;
       const c = 180;
       const r_out = 155;
@@ -905,12 +949,12 @@
 
         // Hover handlers
         path.addEventListener('mouseenter', () => {
-          orbLabel.textContent = 'CONVERT TO';
-          orbExt.textContent = '.' + target;
+          orbLabel.textContent = currentMode === 'tools' ? 'RUN TOOL' : 'CONVERT TO';
+          orbExt.textContent = currentMode === 'tools' ? target : '.' + target;
         });
         path.addEventListener('mouseleave', () => {
-          orbLabel.textContent = 'CHOOSE';
-          orbExt.textContent = 'FORMAT';
+          orbLabel.textContent = currentMode === 'tools' ? 'TOOLS' : 'CHOOSE';
+          orbExt.textContent = currentMode === 'tools' ? 'ACTION' : 'FORMAT';
         });
 
         // Click / Drop handler
@@ -935,8 +979,8 @@
         slicesSvg.appendChild(text);
       });
 
-      orbLabel.textContent = 'CHOOSE';
-      orbExt.textContent = 'FORMAT';
+      orbLabel.textContent = currentMode === 'tools' ? 'TOOLS' : 'CHOOSE';
+      orbExt.textContent = currentMode === 'tools' ? 'ACTION' : 'FORMAT';
     }
 
     function polarToCartesian(cx, cy, r, angleInDegrees) {

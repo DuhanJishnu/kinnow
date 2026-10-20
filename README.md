@@ -11,22 +11,27 @@ Inspired by Tangerine for macOS (drag + Shift to convert). Kinnow is an independ
 ## How to use
 
 1. Start dragging a file in Explorer.
-2. While still dragging, press and hold **Shift**. The wheel appears around your cursor.
-3. Move onto a slice (it turns orange) and release the mouse.
-4. The converted file is saved next to the original, and a tray notification confirms it.
+2. While still dragging:
+   - Press **Shift** for the **Format Conversion Wheel** (`.JPG`, `.PNG`, `.HTML`, `.PDF`, etc.).
+   - Press **Tab** for the **Quick Tools Wheel** (`COMPRESS`, `MERGE`, `SPLIT`).
+   - *(You can also press Shift or Tab while the wheel is open to switch modes instantly!)*
+3. Move onto a slice and release the mouse.
+4. The converted/processed file is saved next to the original, and a tray notification confirms it (click to reveal in Explorer).
 
-> **Tip:** press Shift *after* you start dragging. If Shift is already held when you click, Explorer treats the click as "extend selection" and never starts a file drag. That is Explorer's own behavior and no app can change it.
+> **Tip:** press Shift or Tab *after* you start dragging. If a modifier is already held when you click, Explorer treats the click as "extend selection" and never starts a file drag.
 
-Your original file is never moved, modified or deleted. Existing names are never overwritten: a second conversion becomes `name (1).png`.
+Your original file is never moved, modified or deleted. Existing names are never overwritten: duplicate conversions become `name (1).png`.
 
-## Supported conversions
+## Supported conversions & actions
 
-| From | To |
-|---|---|
-| Images: PNG, JPG, WEBP, BMP, GIF, TIFF | PNG, JPG, WEBP, BMP, GIF, PDF |
-| PDF | PNG (one image, or a folder of pages), TXT |
-| Audio: MP3, WAV, OGG, FLAC, M4A | MP3, WAV, OGG, FLAC |
-| Video: MP4, MKV, AVI, MOV, WEBM | MP4, WEBM, GIF, plus audio extraction to MP3, WAV, OGG, FLAC |
+| Type | From | Available Targets / Tools |
+|---|---|---|
+| **Markdown** | MD, MARKDOWN | **HTML** (clean standalone document), **PDF** (printable), **TXT** |
+| **PDF Tools** | PDF | **COMPRESS** (optimize file size), **SPLIT** (pages to folder), **MERGE** (combine 2+ PDFs in natural order) |
+| **Images** | PNG, JPG, WEBP, BMP, GIF, TIFF | PNG, JPG, WEBP, BMP, GIF, PDF, plus **COMPRESS** |
+| **PDF Conversion** | PDF | PNG (one image, or folder of pages), TXT |
+| **Audio** | MP3, WAV, OGG, FLAC, M4A | MP3, WAV, OGG, FLAC |
+| **Video** | MP4, MKV, AVI, MOV, WEBM | MP4, WEBM, GIF, plus audio extraction to MP3, WAV, OGG, FLAC |
 
 Dropping several files at once converts each of them in parallel. The wheel only offers formats that every dropped file supports.
 
